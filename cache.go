@@ -7,7 +7,6 @@ import (
 
 type strvalue struct {
 	key string
-	mu sync.RWMutex
 	value interface{}
 	end time.Time  // 过期的时间
 }
@@ -15,15 +14,18 @@ type strvalue struct {
 var gocache *cache
 
 type cache struct {
+	mu sync.RWMutex
 	str map[string]*strvalue
 	defaultExpiration time.Duration
 }
 
-
+var stop chan string
 
 func Init() {
+	stop = make(chan string)
 	gocache = &cache{
 		str: make(map[string]*strvalue, 0),
+		mu: sync.RWMutex{},
 	}
 }
 
@@ -38,22 +40,32 @@ func Get(key string) interface{} {
 }
 
 func Set(key string, value interface{}, d time.Duration) {
-
+	gocache.mu.Lock()
 	ss := &strvalue{
 		key: key,
 		value: value,
-		mu: sync.RWMutex{},
 		end: time.Now().Add(d),
 	}
 	gocache.str[key] = ss
-
+	gocache.mu.Unlock()
 	if d > 0 {
 		go expire(key, d)
-
 	}
 }
 
+func Del(key string) {
+	gocache.mu.Lock()
+	if Exist(key) {
+		delete(gocache.str,key)
+	}
+	gocache.mu.Unlock()
+
+}
+
 func TTL(key string) float64 {
+	if _, ok := gocache.str[key]; !ok {
+		return -1
+	}
 	exp := time.Since(gocache.str[key].end).Seconds()
 	if exp < 0 {
 		return  exp * -1
@@ -61,9 +73,20 @@ func TTL(key string) float64 {
 	return 0
 }
 
+func Exist(key string) bool {
+	if _, ok := gocache.str[key]; ok {
+		return true
+	}
+	return false
+}
+
 func expire(key string, d time.Duration) {
 	select {
 	case <- time.After(d):
-		delete(gocache.str,key)
+		gocache.mu.Lock()
+		if Exist(key) {
+			delete(gocache.str,key)
+		}
+		gocache.mu.Unlock()
 	}
 }

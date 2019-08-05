@@ -1,21 +1,16 @@
 package cache
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
-
-
 
 type strvalue struct {
 	key string
 	mu sync.RWMutex
 	value interface{}
-	start time.Time  // 创建的时间
+	end time.Time  // 过期的时间
 }
-
-
 
 var gocache *cache
 
@@ -24,6 +19,8 @@ type cache struct {
 	defaultExpiration time.Duration
 }
 
+
+
 func Init() {
 	gocache = &cache{
 		str: make(map[string]*strvalue, 0),
@@ -31,21 +28,38 @@ func Init() {
 }
 
 func Get(key string) interface{} {
-	fmt.Println(time.Since(gocache.str[key].start))
-	if time.Since(gocache.str[key].start) <= 0  {
+	if _, ok := gocache.str[key]; !ok {
+		return nil
+	}
+	if time.Since(gocache.str[key].end) < 0  {
 		return gocache.str[key].value
-		fmt.Println(time.Since(gocache.str[key].start))
 	}
 	return nil
 }
 
 func Set(key string, value interface{}, d time.Duration) {
+
 	ss := &strvalue{
 		key: key,
 		value: value,
 		mu: sync.RWMutex{},
-		start: time.Now().Add(d),
+		end: time.Now().Add(d),
 	}
 	gocache.str[key] = ss
+
+	if d > 0 {
+		go expire(key, d)
+
+	}
 }
 
+func TTL(key string) time.Duration {
+	return time.Since(gocache.str[key].end)
+}
+
+func expire(key string, d time.Duration) {
+	select {
+	case <- time.After(d):
+		delete(gocache.str,key)
+	}
+}

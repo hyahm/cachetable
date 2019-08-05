@@ -26,6 +26,7 @@ func main() {
 	time.Sleep(2 * time.Second)
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	time.Sleep(2 * time.Second)
+	fmt.Println(cache.TTL("ccc"))
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	fmt.Println("key: ccc, value: ", cache.Get("ccc"))
 
@@ -40,6 +41,7 @@ func main() {
 ```
 key: bbb
 key: aaa, value:  bbb
+0.999666731
 key: aaa, value:  <nil>
 key: ccc, value:  bbb
 ```

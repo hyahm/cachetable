@@ -2,7 +2,10 @@
 go 缓存
 # 注意点
 必须要有服务才能跑起来
-# 例子 来自doc/main.go
+# 优点
+实现过程很简单, 再set的时候 通过goroutine来删除key, 虽然删除key 方便,  但是goroutine 也会浪费丁点的资源
+# demo 
+from doc/main.go
 ```
 package main
 

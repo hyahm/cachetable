@@ -19,13 +19,14 @@ import (
 
 func main() {
 	cache.Init()
-	cache.Set("aaa", "bbb", time.Second * 3)
+	cache.Set("aaa", "bbb", time.Second * 3)  // 设置key和value ,  过期时间,  过期时间 <= 0 就是永不过期
 	cache.Set("ccc", "bbb", time.Second * 5)
-	fmt.Println("key:", cache.Get("aaa"))
+	fmt.Println("key:", cache.Get("aaa"))   // 获取值, 存在就返回值, 否则返回nil
 	//var t *time.Timer
 	time.Sleep(2 * time.Second)
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	time.Sleep(2 * time.Second)
+	fmt.Println(cache.TTL("ccc"))    // 获取key 过期时间, 不存在key 返回-1, 存在过期时间就返回, 否则返回0
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	fmt.Println("key: ccc, value: ", cache.Get("ccc"))
 
@@ -40,6 +41,7 @@ func main() {
 ```
 key: bbb
 key: aaa, value:  bbb
+0.999666731
 key: aaa, value:  <nil>
 key: ccc, value:  bbb
 ```

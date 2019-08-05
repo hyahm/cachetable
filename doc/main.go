@@ -17,6 +17,7 @@ func main() {
 	time.Sleep(2 * time.Second)
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	time.Sleep(2 * time.Second)
+	fmt.Println(cache.TTL("ccc"))
 	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
 	fmt.Println("key: ccc, value: ", cache.Get("ccc"))
 

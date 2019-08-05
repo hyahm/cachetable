@@ -53,8 +53,12 @@ func Set(key string, value interface{}, d time.Duration) {
 	}
 }
 
-func TTL(key string) time.Duration {
-	return time.Since(gocache.str[key].end)
+func TTL(key string) float64 {
+	exp := time.Since(gocache.str[key].end).Seconds()
+	if exp < 0 {
+		return  exp * -1
+	}
+	return 0
 }
 
 func expire(key string, d time.Duration) {

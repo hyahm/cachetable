@@ -12,6 +12,12 @@ type people struct {
 	Id   int
 }
 
+type student struct {
+	Name string
+	Age  int
+	Id   int
+}
+
 func main() {
 	u := &people{
 		Name: "2222",
@@ -43,10 +49,9 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cache.NewCache()
-	c.Table(&people{})
+	c := cache.NewTable(people{})
 
-	if err := c.Key("Id"); err != nil {
+	if err := c.SetKey("Id"); err != nil {
 		panic(err)
 	}
 	if err := c.Add(u); err != nil {
@@ -68,14 +73,13 @@ func main() {
 		panic(err)
 	}
 
-	if err := c.Set("Id", 1, "Age", 222); err != nil {
+	if err := c.Set("Age", 555, "Id", 1); err != nil {
 		panic(err)
 	}
-	value, err := c.GetValue("Age", "Id", 2)
+	value, err := c.Get("Age", "Id", 1)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(value)
 
 }
-

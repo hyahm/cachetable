@@ -63,12 +63,12 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cache.NewTable(people{})
+	c := cache.NewTable(people{})    // 导入表结构， 可以是指针也可以是结构
 
-	if err := c.SetKey("Id"); err != nil {
+	if err := c.SetKey("Id"); err != nil {    // 设置主键的值， 必须设置， 相当于数据库的唯一索引， 名字是结构体的字段名
 		panic(err)
 	}
-	if err := c.Add(u); err != nil {
+	if err := c.Add(u); err != nil {     // 添加数据， 如果不是一样的结构体会报错
 		panic(err)
 	}
 	if err := c.Add(u1); err != nil {
@@ -87,10 +87,10 @@ func main() {
 		panic(err)
 	}
 
-	if err := c.Set("Age", 555, "Id", 1); err != nil {
+	if err := c.Set("Age", 555, "Id", 1); err != nil {   // 根据某个索引键值修改某个字段的值
 		panic(err)
 	}
-	value, err := c.Get("Age", "Id", 1)
+	value, err := c.Get("Age", "Id", 1)     // 根据某个索引键值获取某个键值
 	if err != nil {
 		panic(err)
 	}

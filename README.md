@@ -1,55 +1,106 @@
 # cache
-go 缓存， 后期有时间会弄的
+go 缓存表 
+如其名， 缓存的一张表， 当然可以多张， New就好  
+老方法缓存， 建立很多map， 为了反向找到通常会这样
+map[int64]string    // 用户id 对应用户名
+map[string]int64    // 用户名对应id
+修改其中一个map， 另外一个map也要修改
 
-# 为什么要写这个
-也是对redis的补充，我想通过一个key改变一个值， redis是可以做到的，而且很好， 
-缓存的数据很多是关系型数据库的表，   那么多个key对应一个值呢， 比如一张表有多个唯一值， 我想通过人一个来改变值， 这个值是这些key共同的
-redis 就无法实现了
-
-多key对应一个值的思路
-最难实现应该算是过期时间， 协议， 认证和存储
-所以涉及到过期时间还是用redis，
-应为多key对应唯一值目前考虑存储思路， 目前是增量存储
-
+现在的话， 直接使用 struct保存此类数据， 设置key， 应为这2个都要对应， 所以要设置这2个，
+后面不管是修改还是查找， 使用set或get即可， 应为使用到reflect， 效率肯定没多map快
 
 # demo 
-from doc/main.go
+
 ```
 package main
 
 import (
-	"cache"
 	"fmt"
-	"log"
-	"net/http"
-	"time"
+	"github.com/hyahm/cache"
 )
 
-func main() {
-	cache.Init()
-	cache.Set("aaa", "bbb", time.Second * 3)  // 设置key和value ,  过期时间,  过期时间 <= 0 就是永不过期
-	cache.Set("ccc", "bbb", time.Second * 5)
-	fmt.Println("key:", cache.Get("aaa"))   // 获取值, 存在就返回值, 否则返回nil
-	//var t *time.Timer
-	time.Sleep(2 * time.Second)
-	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
-	time.Sleep(2 * time.Second)
-	fmt.Println(cache.TTL("ccc"))    // 获取key 过期时间, 不存在key 返回-1, 存在过期时间就返回, 否则返回0
-	fmt.Println("key: aaa, value: ", cache.Get("aaa"))
-	fmt.Println("key: ccc, value: ", cache.Get("ccc"))
+// 添加了key， 那么就无法删除了
+type people struct {
+	Name string
+	Age  int
+	Id   int
+}
 
-	if err := http.ListenAndServe(":7070", nil);err != nil {
-		log.Fatal(err)
+type student struct {
+	Name string
+	Age  int
+	Id   int
+}
+
+func main() {
+	u := &people{
+		Name: "2222",
+		Age:  111,
+		Id:   0,
+	}
+	u1 := &people{
+		Name: "2222",
+		Age:  111,
+		Id:   1,
+	}
+	u2 := &people{
+		Name: "2",
+		Age:  222,
+		Id:   2,
+	}
+	u3 := &people{
+		Name: "2222",
+		Age:  333,
+		Id:   3,
+	}
+	u4 := &people{
+		Name: "2222",
+		Age:  444,
+		Id:   4,
+	}
+	u5 := &people{
+		Name: "2222",
+		Age:  555,
+		Id:   5,
+	}
+	c := cache.NewTable(people{})
+
+	if err := c.SetKey("Id"); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u1); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u2); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u3); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u4); err != nil {
+		panic(err)
+	}
+	if err := c.Add(u5); err != nil {
+		panic(err)
 	}
 
+	if err := c.Set("Age", 555, "Id", 1); err != nil {
+		panic(err)
+	}
+	value, err := c.Get("Age", "Id", 1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+
 }
+
 
 ```
 输出
 ```
-key: bbb
-key: aaa, value:  bbb
-0.999666731
-key: aaa, value:  <nil>
-key: ccc, value:  bbb
+555
 ```

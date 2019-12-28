@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/hyahm/cache"
+	"github.com/hyahm/cachetable"
 )
 
 // 添加了key， 那么就无法删除了
@@ -63,7 +63,7 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cache.NewTable(people{})    // 导入表结构， 可以是指针也可以是结构
+	c := cachetable.NewTable(people{})    // 导入表结构， 可以是指针也可以是结构
 
 	if err := c.SetKey("Id"); err != nil {    // 设置主键的值， 必须设置， 相当于数据库的唯一索引， 名字是结构体的字段名
 		panic(err)

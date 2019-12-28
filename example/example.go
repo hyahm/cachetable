@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/hyahm/cache"
+	"github.com/hyahm/cachetable"
 )
 
 // 添加了key， 那么就无法删除了
@@ -49,7 +49,7 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cache.NewTable(people{})
+	c := cachetable.NewTable(people{})
 
 	if err := c.SetKey("Id"); err != nil {
 		panic(err)

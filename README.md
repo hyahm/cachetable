@@ -1,13 +1,13 @@
-# cache
-go 缓存表 
-如其名， 缓存的一张表， 当然可以多张， New就好  
-老方法缓存， 建立很多map， 为了反向找到通常会这样
-map[int64]string    // 用户id 对应用户名
-map[string]int64    // 用户名对应id
-修改其中一个map， 另外一个map也要修改
+# cache 
+go 缓存表   
+如其名， 缓存的一张表， 当然可以多张， New就好    
+老方法缓存， 建立很多map， 为了反向找到通常会这样  
+map[int64]string    // 用户id 对应用户名  
+map[string]int64    // 用户名对应id  
+修改其中一个map， 另外一个map也要修改  
 
-现在的话， 直接使用 struct保存此类数据， 设置key， 应为这2个都要对应， 所以要设置这2个，
-后面不管是修改还是查找， 使用set或get即可， 应为使用到reflect， 效率肯定没多map快
+现在的话， 直接使用 struct保存此类数据， 设置key， 应为这2个都要对应， 所以要设置这2个，  
+后面不管是修改还是查找， 使用set或get即可， 使用到reflect， 效率肯定没多map快  
 
 # demo 
 
@@ -16,7 +16,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/hyahm/cache"
+	"github.com/hyahm/cachetable"
 )
 
 // 添加了key， 那么就无法删除了
@@ -63,7 +63,7 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cache.NewTable(people{})    // 导入表结构， 可以是指针也可以是结构
+	c := cachetable.NewTable(people{})    // 导入表结构， 可以是指针也可以是结构
 
 	if err := c.SetKey("Id"); err != nil {    // 设置主键的值， 必须设置， 相当于数据库的唯一索引， 名字是结构体的字段名
 		panic(err)

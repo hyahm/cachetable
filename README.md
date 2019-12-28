@@ -7,7 +7,7 @@ map[string]int64    // 用户名对应id
 修改其中一个map， 另外一个map也要修改
 
 现在的话， 直接使用 struct保存此类数据， 设置key， 应为这2个都要对应， 所以要设置这2个，
-后面不管是修改还是查找， 使用set或get即可， 应为使用到reflect， 效率肯定没多map快
+后面不管是修改还是查找， 使用set或get即可， 使用到reflect， 效率肯定没多map快
 
 # demo 
 

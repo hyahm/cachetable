@@ -21,7 +21,7 @@ type student struct {
 func main() {
 	u := &people{
 		Name: "2222",
-		Age:  111,
+		Age:  888,
 		Id:   0,
 	}
 	u1 := &people{
@@ -54,6 +54,8 @@ func main() {
 	if err := c.SetKey("Id"); err != nil {
 		panic(err)
 	}
+
+	c.SetKey("Age")
 	if err := c.Add(u); err != nil {
 		panic(err)
 	}
@@ -73,10 +75,24 @@ func main() {
 		panic(err)
 	}
 
-	if err := c.Set("Age", 555, "Id", 1); err != nil {
+	if err := c.Set("Age", 777, "Id", 1); err != nil {
 		panic(err)
 	}
 	value, err := c.Get("Age", "Id", 1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+
+	c.Del("Id", 1)
+
+	value, err = c.Get("Age", "Id", 1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+
+	value, err = c.Get("Name", "Age", 777)
 	if err != nil {
 		panic(err)
 	}

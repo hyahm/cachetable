@@ -9,6 +9,9 @@ map[string]int64    // 用户名对应id
 现在的话， 直接使用 struct保存此类数据， 设置key， 应为这2个都要对应， 所以要设置这2个，  
 后面不管是修改还是查找， 使用set或get即可， 使用到reflect， 效率肯定没多map快  
 初始包， 结构体的key只支持int, string, uint64, int64, bool,fload64 的值
+
+
+增加过期时间， 代替简单的缓存
 # demo 
 
 ```
@@ -73,16 +76,16 @@ func main() {
 		panic(err)
 	}
 
-	err := c.Add(u)
+	err := c.Add(u, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1)
-	c.Add(u2)
-	c.Add(u3)
-	c.Add(u4)
+	c.Add(u1, 0)
+	c.Add(u2, 0)
+	c.Add(u3, 0)
+	c.Add(u4, 0)
 
-	c.Add(u5)
+	c.Add(u5, 0)
 	// 获取值
 	filter := c.Filter(Id, 1)
 	value := filter.Get(Name)

@@ -72,12 +72,15 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 			if err != nil {
 				return err
 			}
-
 			r := &row{
 				mu:     sync.RWMutex{},
 				value:  table,
-				expire: time.Now().Add(expire),
+
 			}
+			if expire > 0 {
+				r.expire = time.Now().Add(expire)
+			}
+
 			r.mu.Lock()
 			c.cache[k][kv] = r
 			r.mu.Unlock()

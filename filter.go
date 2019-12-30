@@ -36,7 +36,6 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 		key, _ := c.toString(value)
 		if vms[key].expire.Unix() != -62135596800 && time.Now().Unix() >= vms[key].expire.Unix() {
 			// 说明过期了
-
 			return &Filter{
 				Row: nil,
 				Err: errors.New("table expired"),

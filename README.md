@@ -12,10 +12,35 @@ map[string]int64    // 用户名对应id
 # demo 
 
 ```
-u := &people{
+package main
+
+import (
+	"fmt"
+	"github.com/hyahm/cachetable"
+	"log"
+)
+
+// 添加了key， 那么就无法删除了
+type people struct {
+	Name    string
+	Age     int
+	Id      int
+	Kecheng []string
+	Data    []byte
+}
+
+const (
+	Name = "Name"
+	Age  = "Age"
+	Id   = "Id"
+)
+
+func main() {
+	u := &people{
 		Name: "2222",
 		Age:  888,
 		Id:   0,
+		Data: []byte("hello world"),
 	}
 	u1 := &people{
 		Name: "2222",
@@ -42,16 +67,16 @@ u := &people{
 		Age:  555,
 		Id:   5,
 	}
-	c, err := cachetable.NewTable(people{})
-	if err != nil {
-		fmt.Println(err)
-	}
+	c := cachetable.NewTable(people{})
 
 	if err := c.SetKeys(Id, Age); err != nil {
 		panic(err)
 	}
 
-	c.Add(u)
+	err := c.Add(u)
+	if err != nil {
+		log.Fatal(err)
+	}
 	c.Add(u1)
 	c.Add(u2)
 	c.Add(u3)
@@ -77,7 +102,9 @@ u := &people{
 	}
 	value = filter.Get(Age)
 	fmt.Println(value)
+
 }
+
 
 ```
 输出

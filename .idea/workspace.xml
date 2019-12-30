@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="61356b65-96c3-4993-99b8-50dd859ee40e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/filter.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/example/example.go" beforeDir="false" afterPath="$PROJECT_DIR$/example/example.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/table.go" beforeDir="false" afterPath="$PROJECT_DIR$/table.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/table_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/table_test.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -62,7 +62,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/hyahm/cache/example">
+  <component name="RunManager" selected="Go Build.go build github.com/hyahm/cachetable/example">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="cache" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -70,15 +70,6 @@
       <kind value="FILE" />
       <filePath value="$PROJECT_DIR$/" />
       <package value="github.com/hyahm/cache" />
-      <directory value="$PROJECT_DIR$/" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build cache/doc" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="cache" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <filePath value="$PROJECT_DIR$/doc/client.go" />
-      <package value="cache/doc" />
       <directory value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
@@ -97,6 +88,15 @@
       <kind value="PACKAGE" />
       <filePath value="$PROJECT_DIR$/example/example.go" />
       <package value="github.com/hyahm/cache/example" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build github.com/hyahm/cachetable/example" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="cache" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$/example/example.go" />
+      <package value="github.com/hyahm/cachetable/example" />
       <directory value="$PROJECT_DIR$/" />
       <method v="2" />
     </configuration>
@@ -129,11 +129,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build github.com/hyahm/cachetable/example" />
         <item itemvalue="Go Build.go build github.com/hyahm/cache/example" />
         <item itemvalue="Go Build.go build server.go" />
         <item itemvalue="Go Build.go build client.go" />
         <item itemvalue="Go Build.go build main.go" />
-        <item itemvalue="Go Build.go build cache/doc" />
       </list>
     </recent_temporary>
   </component>

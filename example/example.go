@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hyahm/cachetable"
 	"log"
+	"time"
 )
 
 // 添加了key， 那么就无法删除了
@@ -22,6 +23,8 @@ const (
 )
 
 func main() {
+	var t time.Time
+	fmt.Println(t.Unix())
 	u := &people{
 		Name: "2222",
 		Age:  888,
@@ -59,16 +62,16 @@ func main() {
 		panic(err)
 	}
 
-	err := c.Add(u)
+	err := c.Add(u, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1)
-	c.Add(u2)
-	c.Add(u3)
-	c.Add(u4)
+	c.Add(u1, 0)
+	c.Add(u2, 0)
+	c.Add(u3, 0)
+	c.Add(u4, 0)
 
-	c.Add(u5)
+	c.Add(u5, 0)
 	// 获取值
 	filter := c.Filter(Id, 1)
 	value := filter.Get(Name)

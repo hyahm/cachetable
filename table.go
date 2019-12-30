@@ -5,11 +5,13 @@ import (
 	"reflect"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type row struct {
-	mu    sync.RWMutex // 行锁
-	value interface{}  // 值
+	mu     sync.RWMutex // 行锁
+	value  interface{}  // 值
+	expire time.Time
 }
 
 var (
@@ -24,22 +26,23 @@ var (
 )
 
 type Cache struct {
-	keys  map[string]bool            // 保存key, 为了去重， 使用map
+	keys  []string                   // 保存key, 为了去重， 使用map
 	cache map[string]map[string]*row // 保存field， 将所有值都转为string
 	s     interface{}                // 保存表结构
+
 }
 
 func NewTable(table interface{}) *Cache {
 	// 表字段不能是指针或结构
 	return &Cache{
-		keys:  make(map[string]bool),
+		keys:  make([]string, 0),
 		cache: make(map[string]map[string]*row),
 		s:     table,
 	}
 
 }
 
-func (c *Cache) Add(table interface{}) error {
+func (c *Cache) Add(table interface{}, expire time.Duration) error {
 	//必须是指针
 	if reflect.TypeOf(table).Kind() != reflect.Ptr {
 		return ErrorNotPointer
@@ -56,12 +59,11 @@ func (c *Cache) Add(table interface{}) error {
 	// 必须是同一类型
 	if st == reflect.TypeOf(table).Elem() {
 		//遍历 添加key
-		for k, _ := range c.keys {
+		for _, k := range c.keys {
 			// 将字段的值全部转化为string
 
 			if _, ok := c.cache[k]; !ok {
 				// 没有字段， 初始化
-
 				c.cache[k] = make(map[string]*row)
 
 			}
@@ -70,9 +72,11 @@ func (c *Cache) Add(table interface{}) error {
 			if err != nil {
 				return err
 			}
+
 			r := &row{
-				mu:    sync.RWMutex{},
-				value: table,
+				mu:     sync.RWMutex{},
+				value:  table,
+				expire: time.Now().Add(expire),
 			}
 			r.mu.Lock()
 			c.cache[k][kv] = r
@@ -121,7 +125,10 @@ func (c *Cache) SetKeys(keys ...string) error {
 	// 判断key 是否有效
 	for _, k := range keys {
 		if _, ok := sv.FieldByName(k); ok {
-			c.keys[k] = true
+			if !c.hasKey(k) {
+				c.keys = append(c.keys, k)
+			}
+
 		}
 	}
 
@@ -132,8 +139,32 @@ func (c *Cache) SetKeys(keys ...string) error {
 
 //
 func (c *Cache) GetKeys() (ks []string) {
-	for k, _ := range c.keys {
-		ks = append(ks, k)
+	return c.keys
+}
+
+func (c *Cache) hasKey(s string) bool {
+	for _, v := range c.keys {
+		if v == s {
+			return true
+		}
 	}
-	return
+	return false
+}
+
+func (c *Cache) Clean(t time.Duration) {
+	// 清除过期table
+	if len(c.keys) == 0 {
+		panic(ErrorNoKey)
+	}
+	for {
+		// 第一个字段就行了
+		time.Sleep(t)
+		allmap := c.cache[c.keys[0]]
+		for k, v := range allmap {
+			if v.expire.Unix() == 0 {
+				// 删除
+				_ = c.Filter(c.keys[0], k).Del()
+			}
+		}
+	}
 }

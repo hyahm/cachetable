@@ -1,8 +1,10 @@
 package cachetable
 
 import (
+	"errors"
 	"reflect"
 	"sync"
+	"time"
 )
 
 type Filter struct {
@@ -15,12 +17,14 @@ type Filter struct {
 func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if c.s == nil {
 		return &Filter{
+			Row: nil,
 			Err: ErrorNotInit,
 		}
 
 	}
 	if len(c.keys) == 0 {
 		return &Filter{
+			Row: nil,
 			Err: ErrorNoKey,
 		}
 
@@ -29,7 +33,16 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
 		key, _ := c.toString(value)
+		if vms[key].expire.Unix() != -62135596800 && time.Now().Unix() >= vms[key].expire.Unix() {
+			// 说明过期了
 
+			return &Filter{
+				Row: nil,
+				Err: errors.New("table expired"),
+				c:   c,
+				mu:  vms[key].mu,
+			}
+		}
 		return &Filter{
 			Row: vms[key].value,
 			Err: nil,
@@ -39,6 +52,7 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 		return nil
 	} else {
 		return &Filter{
+			Row: nil,
 			Err: ErrorNoFeildKey,
 		}
 	}
@@ -51,55 +65,64 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 //	Del() error
 //}
 
-func (c *Filter) Get(keys ...string) []interface{} {
+func (f *Filter) Get(keys ...string) []interface{} {
+	if f.Row == nil {
+		return nil
+	}
 	vs := make([]interface{}, 0)
 	for _, v := range keys {
-		i := reflect.ValueOf(c.Row).Elem().FieldByName(v).Interface()
+		i := reflect.ValueOf(f.Row).Elem().FieldByName(v).Interface()
 		vs = append(vs, i)
 	}
 	return vs
 }
 
-func (c *Filter) Del() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (f *Filter) Del() error {
+	if f.Row == nil {
+		return f.Err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	//找到所有所有的keys 的值
-	for k, _ := range c.c.keys {
+	for _, k := range f.c.keys {
 		//v := c.Get(k)
-		ft := reflect.ValueOf(c.Row).FieldByName(k).Interface()
-		value, _ := c.c.toString(ft)
-		delete(c.c.cache[k], value)
+		ft := reflect.ValueOf(f.Row).FieldByName(k).Interface()
+		value, _ := f.c.toString(ft)
+		delete(f.c.cache[k], value)
 	}
 
-	return c.Err
+	return f.Err
 
 }
 
-func (c *Filter) Set(field string, value interface{}) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (f *Filter) Set(field string, value interface{}) error {
+	if f.Row == nil {
+		return f.Err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
 
-	if _, ok := c.c.keys[field]; ok {
+	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
-		newvalue_str, _ := c.c.toString(value)
-		if _, ok := c.c.cache[field][newvalue_str]; ok {
+		newvalue_str, _ := f.c.toString(value)
+		if _, ok := f.c.cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
-		oldvalue_str, _ := c.c.toString(value)
+		oldvalue_str, _ := f.c.toString(value)
 
-		c.c.cache[field][newvalue_str] = &row{
+		f.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},
-			value: c.Row,
+			value: f.Row,
 		}
 		// 删掉老的键值
-		delete(c.c.cache[field], oldvalue_str)
+		delete(f.c.cache[field], oldvalue_str)
 	}
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	reflect.ValueOf(c.Row).Elem().FieldByName(field).Set(newv)
+	reflect.ValueOf(f.Row).Elem().FieldByName(field).Set(newv)
 
-	return c.Err
+	return f.Err
 }

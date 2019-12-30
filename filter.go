@@ -8,10 +8,11 @@ import (
 )
 
 type Filter struct {
-	Row interface{}
-	c   *Cache
-	Err error
-	mu  sync.RWMutex
+	Row    interface{}
+	c      *Cache
+	Err    error
+	mu     sync.RWMutex
+	expire time.Time
 }
 
 func (c *Cache) Filter(field string, value interface{}) *Filter {
@@ -44,10 +45,11 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 			}
 		}
 		return &Filter{
-			Row: vms[key].value,
-			Err: nil,
-			c:   c,
-			mu:  vms[key].mu,
+			Row:    vms[key].value,
+			Err:    nil,
+			c:      c,
+			expire: vms[key].expire,
+			mu:     vms[key].mu,
 		}
 		return nil
 	} else {
@@ -64,6 +66,19 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 //	Set(field string, Value interface{}) error
 //	Del() error
 //}
+
+func (f *Filter) TTL() time.Duration {
+	if f.Row == nil {
+		return 0
+	}
+	if f.expire.Unix() == -62135596800 {
+		return -1
+	}
+	if time.Now().Unix() <= f.expire.Unix() {
+		return 0
+	}
+	return 0
+}
 
 func (f *Filter) Get(keys ...string) []interface{} {
 	if f.Row == nil {

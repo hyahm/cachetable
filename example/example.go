@@ -19,83 +19,72 @@ const (
 )
 
 func main() {
-	//u := &people{
-	//	Name: "2222",
-	//	Age:  888,
-	//	Id:   0,
-	//}
+	u := &people{
+		Name: "2222",
+		Age:  888,
+		Id:   0,
+	}
 	u1 := &people{
 		Name: "2222",
 		Age:  111,
 		Id:   1,
 	}
-	//u2 := &people{
-	//	Name: "2",
-	//	Age:  222,
-	//	Id:   2,
-	//}
-	//u3 := &people{
-	//	Name: "2222",
-	//	Age:  333,
-	//	Id:   3,
-	//}
-	//u4 := &people{
-	//	Name: "2222",
-	//	Age:  444,
-	//	Id:   4,
-	//}
-	//u5 := &people{
-	//	Name: "2222",
-	//	Age:  555,
-	//	Id:   5,
-	//}
+	u2 := &people{
+		Name: "2",
+		Age:  222,
+		Id:   2,
+	}
+	u3 := &people{
+		Name: "2222",
+		Age:  333,
+		Id:   3,
+	}
+	u4 := &people{
+		Name: "2222",
+		Age:  444,
+		Id:   4,
+	}
+	u5 := &people{
+		Name: "2222",
+		Age:  555,
+		Id:   5,
+	}
 	c, err := cachetable.NewTable(people{})
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	if err := c.SetKeys(Id); err != nil {
+	if err := c.SetKeys(Id, Age); err != nil {
 		panic(err)
 	}
 
 	//c.SetKey("Age")
-	//if err := c.Add(u); err != nil {
-	//	panic(err)
-	//}
-	if err := c.Add(u1); err != nil {
+
+	c.Add(u)
+	c.Add(u1)
+	c.Add(u2)
+	c.Add(u3)
+	c.Add(u4)
+
+	c.Add(u5)
+	// 获取值
+	filter := c.Filter(Id, 1)
+	value := filter.Get(Name)
+	fmt.Println(value)
+	// 设置非 key的value
+	err = filter.Set(Name, "hello world")
+	if err != nil {
 		panic(err)
 	}
-	//if err := c.Add(u2); err != nil {
-	//	panic(err)
-	//}
-	//if err := c.Add(u3); err != nil {
-	//	panic(err)
-	//}
-	//if err := c.Add(u4); err != nil {
-	//	panic(err)
-	//}
-	//if err := c.Add(u5); err != nil {
-	//	panic(err)
-	//}
-	//
-	//if err := c.Set("Age", 777, "Id", 1); err != nil {
-	//	panic(err)
-	//}
-	value := c.Filter(Id, 1).Get(Age, Id)
+	value = filter.Get(Name)
 	fmt.Println(value)
-	//
-	//c.Del("Id", 1)
-	//
-	//value, err = c.Get("Age", "Id", 1)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(value)
-	//
-	//value, err = c.Get("Name", "Age", 777)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(value)
+
+	// 设置 key的value
+	err = filter.Set(Age, 6666)
+	if err != nil {
+		panic(err)
+	}
+	value = filter.Get(Age)
+	fmt.Println(value)
 
 }

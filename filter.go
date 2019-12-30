@@ -74,16 +74,21 @@ func (c *F) Del() error {
 
 }
 
-func (c *F) Set(field string, Value interface{}) error {
+func (c *F) Set(field string, value interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if _, ok := c.c.keys[field]; ok {
-		// 如果是key
+		// 如果是key, value不能重复
+		newvalue_str, _ := c.c.toString(reflect.ValueOf(value))
+		if _, ok := c.c.cache[field][newvalue_str]; ok {
+			return ErrorDuplicate
+		}
+
 		// 如果是设置的是key是主键， 重新生成
 		oldvalue := c.Get(field)
 		oldvalue_str, _ := c.c.toString(reflect.ValueOf(oldvalue))
-		newvalue_str, _ := c.c.toString(reflect.ValueOf(Value))
+
 		c.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},
 			value: c.Row,
@@ -93,7 +98,7 @@ func (c *F) Set(field string, Value interface{}) error {
 	}
 
 	// 更新v
-	newv := reflect.ValueOf(Value)
+	newv := reflect.ValueOf(value)
 	reflect.ValueOf(c.Row).Elem().FieldByName(field).Set(newv)
 
 	return c.Err

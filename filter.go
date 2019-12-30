@@ -5,22 +5,22 @@ import (
 	"sync"
 )
 
-type F struct {
+type Filter struct {
 	Row interface{}
 	c   *Cache
 	Err error
 	mu  sync.RWMutex
 }
 
-func (c *Cache) Filter(field string, value interface{}) *F {
+func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if c.s == nil {
-		return &F{
+		return &Filter{
 			Err: ErrorNotInit,
 		}
 
 	}
 	if len(c.keys) == 0 {
-		return &F{
+		return &Filter{
 			Err: ErrorNoKey,
 		}
 
@@ -30,7 +30,7 @@ func (c *Cache) Filter(field string, value interface{}) *F {
 		//找到所有所有的keys 的值
 		key, _ := c.toString(value)
 
-		return &F{
+		return &Filter{
 			Row: vms[key].value,
 			Err: nil,
 			c:   c,
@@ -38,20 +38,20 @@ func (c *Cache) Filter(field string, value interface{}) *F {
 		}
 		return nil
 	} else {
-		return &F{
+		return &Filter{
 			Err: ErrorNoFeildKey,
 		}
 	}
 
 }
 
-type Filter interface {
-	Get(keys ...string) []interface{}
-	Set(field string, Value interface{}) error
-	Del() error
-}
+//type Filter interface {
+//	Get(keys ...string) []interface{}
+//	Set(field string, Value interface{}) error
+//	Del() error
+//}
 
-func (c *F) Get(keys ...string) []interface{} {
+func (c *Filter) Get(keys ...string) []interface{} {
 	vs := make([]interface{}, 0)
 	for _, v := range keys {
 		i := reflect.ValueOf(c.Row).Elem().FieldByName(v).Interface()
@@ -60,7 +60,7 @@ func (c *F) Get(keys ...string) []interface{} {
 	return vs
 }
 
-func (c *F) Del() error {
+func (c *Filter) Del() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	//找到所有所有的keys 的值
@@ -75,7 +75,7 @@ func (c *F) Del() error {
 
 }
 
-func (c *F) Set(field string, value interface{}) error {
+func (c *Filter) Set(field string, value interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

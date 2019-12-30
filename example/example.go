@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/hyahm/cachetable"
+	"log"
 )
 
 // 添加了key， 那么就无法删除了
 type people struct {
-	Name string
-	Age  int
-	Id   int
+	Name    string
+	Age     int
+	Id      int
+	Kecheng []string
+	Data    []byte
 }
 
 const (
@@ -23,6 +26,7 @@ func main() {
 		Name: "2222",
 		Age:  888,
 		Id:   0,
+		Data: []byte("hello world"),
 	}
 	u1 := &people{
 		Name: "2222",
@@ -49,18 +53,16 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c, err := cachetable.NewTable(people{})
-	if err != nil {
-		fmt.Println(err)
-	}
+	c := cachetable.NewTable(people{})
 
 	if err := c.SetKeys(Id, Age); err != nil {
 		panic(err)
 	}
 
-	//c.SetKey("Age")
-
-	c.Add(u)
+	err := c.Add(u)
+	if err != nil {
+		log.Fatal(err)
+	}
 	c.Add(u1)
 	c.Add(u2)
 	c.Add(u3)

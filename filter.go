@@ -28,7 +28,7 @@ func (c *Cache) Filter(field string, value interface{}) *F {
 	// 找到所有索引， 删除,   必须是key
 	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
-		key, _ := c.toString(reflect.ValueOf(value))
+		key, _ := c.toString(value)
 
 		return &F{
 			Row: vms[key].value,
@@ -65,8 +65,9 @@ func (c *F) Del() error {
 	defer c.mu.Unlock()
 	//找到所有所有的keys 的值
 	for k, _ := range c.c.keys {
-		v := c.Get(k)
-		value, _ := c.c.toString(reflect.ValueOf(v))
+		//v := c.Get(k)
+		ft := reflect.ValueOf(c.Row).FieldByName(k).Interface()
+		value, _ := c.c.toString(ft)
 		delete(c.c.cache[k], value)
 	}
 
@@ -80,14 +81,13 @@ func (c *F) Set(field string, value interface{}) error {
 
 	if _, ok := c.c.keys[field]; ok {
 		// 如果是key, value不能重复
-		newvalue_str, _ := c.c.toString(reflect.ValueOf(value))
+		newvalue_str, _ := c.c.toString(value)
 		if _, ok := c.c.cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
-		oldvalue := c.Get(field)
-		oldvalue_str, _ := c.c.toString(reflect.ValueOf(oldvalue))
+		oldvalue_str, _ := c.c.toString(value)
 
 		c.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},

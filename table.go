@@ -13,14 +13,14 @@ type row struct {
 }
 
 var (
-	ErrorNotInit     = errors.New("init first")
-	ErrorNotPointer  = errors.New("table must be a pointer")
-	ErrorNoKey       = errors.New("at least set one key")
-	ErrorStruct      = errors.New("not a same struct")
-	ErrorDuplicate   = errors.New("Duplicate key ")
-	ErrorStructFeild = errors.New("Struct need Not Have ptr struct")
-	ErrorNoFeildKey  = errors.New("field not a key")
-	ErrorNoRows      = errors.New("not rows")
+	ErrorNotInit    = errors.New("init first")
+	ErrorNotPointer = errors.New("table must be a pointer")
+	ErrorNoKey      = errors.New("at least set one key")
+	ErrorStruct     = errors.New("not a same struct")
+	ErrorDuplicate  = errors.New("Duplicate key ")
+	//ErrorStructFeild = errors.New("Struct need Not Have ptr struct")
+	ErrorNoFeildKey = errors.New("field not a key")
+	ErrorNoRows     = errors.New("not rows")
 )
 
 type Cache struct {
@@ -29,25 +29,13 @@ type Cache struct {
 	s     interface{}                // 保存表结构
 }
 
-func NewTable(table interface{}) (*Cache, error) {
+func NewTable(table interface{}) *Cache {
 	// 表字段不能是指针或结构
-	t := reflect.TypeOf(table)
-	for i := 0; i < t.NumField(); i++ {
-		if t.Field(i).Type.Kind() == reflect.Ptr {
-			return nil, ErrorStructFeild
-		}
-		if t.Field(i).Type.Kind() == reflect.Struct {
-			return nil, ErrorStructFeild
-		}
-		if t.Field(i).Type.Kind() == reflect.Slice {
-			return nil, ErrorStructFeild
-		}
-	}
 	return &Cache{
 		keys:  make(map[string]bool),
 		cache: make(map[string]map[string]*row),
 		s:     table,
-	}, nil
+	}
 
 }
 
@@ -67,7 +55,6 @@ func (c *Cache) Add(table interface{}) error {
 	}
 	// 必须是同一类型
 	if st == reflect.TypeOf(table).Elem() {
-		sv := reflect.ValueOf(table).Elem()
 		//遍历 添加key
 		for k, _ := range c.keys {
 			// 将字段的值全部转化为string
@@ -78,8 +65,8 @@ func (c *Cache) Add(table interface{}) error {
 				c.cache[k] = make(map[string]*row)
 
 			}
-			fv := sv.FieldByName(k)
-			kv, err := c.toString(fv)
+
+			kv, err := c.toString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
 			if err != nil {
 				return err
 			}
@@ -98,9 +85,10 @@ func (c *Cache) Add(table interface{}) error {
 	return nil
 }
 
-func (c *Cache) toString(fv reflect.Value) (string, error) {
-
-	t := fv.Type().String()
+func (c *Cache) toString(value interface{}) (string, error) {
+	t := reflect.TypeOf(value).String()
+	fv := reflect.ValueOf(value)
+	//fmt.Println("type:", ft.String())
 	switch t {
 	case "string":
 		return fv.Interface().(string), nil
@@ -114,6 +102,7 @@ func (c *Cache) toString(fv reflect.Value) (string, error) {
 		return strconv.FormatBool(fv.Interface().(bool)), nil
 	case "float64":
 		return strconv.FormatFloat(fv.Interface().(float64), 'f', -1, 64), nil
+
 	default:
 		return "", errors.New("not support type")
 	}

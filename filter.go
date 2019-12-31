@@ -1,7 +1,6 @@
 package cachetable
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 	"time"

@@ -1,6 +1,7 @@
 package cachetable
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -40,4 +41,5 @@ func TestTable(t *testing.T) {
 	if err == nil {
 		t.Error("need error")
 	}
+	fmt.Println(f.Get(Age))
 }

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/hyahm/cachetable"
 	"log"
+	"time"
 )
 
 // 添加了key， 那么就无法删除了
@@ -39,6 +40,7 @@ const (
 )
 
 func main() {
+	
 	u := &people{
 		Name: "2222",
 		Age:  888,
@@ -80,7 +82,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1, 0)
+	c.Add(u1, 10*time.Second)
 	c.Add(u2, 0)
 	c.Add(u3, 0)
 	c.Add(u4, 0)
@@ -106,14 +108,33 @@ func main() {
 	value = filter.Get(Age)
 	fmt.Println(value)
 
+	fmt.Println(filter.TTL())
+	time.Sleep(3*time.Second)
+	fmt.Println(filter.TTL())
+	filter.SetTTL(10*time.Second)
+	time.Sleep(7*time.Second)
+	value = filter.Get(Age)
+	fmt.Println(value)
+	fmt.Println(filter.TTL())
 }
 
 
+
 ```
-输出
+输出, 过期时间单位是秒
 ```
 [2222]
 [hello world]
 [6666]
+9
+6
+[6666]
+2
+
 
 ```
+
+建议新开一个goroutine 删除过期的row
+go func(){
+	func (c *Cache) Clean(t time.Duration) {   // t表示检查的时间间隔
+}()

@@ -97,7 +97,9 @@ func main() {
 	fmt.Println(filter.TTL())
 	time.Sleep(3*time.Second)
 	fmt.Println(filter.TTL())
+	filter.SetTTL(10*time.Second)
 	time.Sleep(7*time.Second)
 	value = filter.Get(Age)
 	fmt.Println(value)
+	fmt.Println(filter.TTL())
 }

@@ -23,6 +23,8 @@ const (
 )
 
 func main() {
+	a := 5654.15616
+	fmt.Println(int64(a))
 	var t time.Time
 	fmt.Println(t.Unix())
 	u := &people{
@@ -66,7 +68,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1, 0)
+	c.Add(u1, 10*time.Second)
 	c.Add(u2, 0)
 	c.Add(u3, 0)
 	c.Add(u4, 0)
@@ -92,4 +94,10 @@ func main() {
 	value = filter.Get(Age)
 	fmt.Println(value)
 
+	fmt.Println(filter.TTL())
+	time.Sleep(3*time.Second)
+	fmt.Println(filter.TTL())
+	time.Sleep(7*time.Second)
+	value = filter.Get(Age)
+	fmt.Println(value)
 }

@@ -113,8 +113,12 @@ func main() {
 	fmt.Println(filter.TTL())
 	filter.SetTTL(10*time.Second)
 	time.Sleep(7*time.Second)
-	value = filter.Get(Age)
-	fmt.Println(value)
+	var age int
+	err = filter.Get(Age).Scan(&age)
+	if err != nil {
+	   	panic(err)
+	}
+	fmt.Println(age)
 	fmt.Println(filter.TTL())
 }
 

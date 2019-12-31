@@ -1,7 +1,6 @@
 package cachetable
 
 import (
-	"errors"
 	"reflect"
 	"sync"
 	"time"
@@ -38,7 +37,7 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 			// 说明过期了
 			return &Filter{
 				Row: nil,
-				Err: errors.New("table expired"),
+				Err: ErrorExpired,
 				c:   c,
 				mu:  vms[key].mu,
 			}
@@ -66,27 +65,52 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 //	Del() error
 //}
 
-func (f *Filter) TTL() time.Duration {
+func (f *Filter) Expire() int64 {
 	if f.Row == nil {
 		return 0
 	}
 	if f.expire.Unix() == -62135596800 {
 		return -1
 	}
-	if time.Now().Unix() <= f.expire.Unix() {
+	if time.Now().Unix() >= f.expire.Unix() {
 		return 0
 	}
-	return 0
+	//s :=
+	return int64(f.expire.Sub(time.Now()).Seconds())
+}
+
+func (f *Filter) expired() bool {
+
+	return f.TTL() <= 0
+}
+
+func (f *Filter) TTL() int64 {
+	if f.Row == nil {
+		return 0
+	}
+	if f.expire.Unix() == -62135596800 {
+		return -1
+	}
+	if time.Now().Unix() >= f.expire.Unix() {
+		return 0
+	}
+	//s :=
+	return int64(f.expire.Sub(time.Now()).Seconds())
 }
 
 func (f *Filter) Get(keys ...string) []interface{} {
 	if f.Row == nil {
 		return nil
 	}
-	vs := make([]interface{}, 0)
-	for _, v := range keys {
-		i := reflect.ValueOf(f.Row).Elem().FieldByName(v).Interface()
-		vs = append(vs, i)
+	l := len(keys)
+	vs := make([]interface{}, l)
+	if f.expired() {
+		return vs
+	}
+
+	for i, v := range keys {
+		val := reflect.ValueOf(f.Row).Elem().FieldByName(v).Interface()
+		vs[i] = val
 	}
 	return vs
 }
@@ -94,6 +118,9 @@ func (f *Filter) Get(keys ...string) []interface{} {
 func (f *Filter) Del() error {
 	if f.Row == nil {
 		return f.Err
+	}
+	if f.expired() {
+		return ErrorExpired
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -109,9 +136,29 @@ func (f *Filter) Del() error {
 
 }
 
+func (f *Filter) SetTTL(t time.Duration) error {
+	if f.Row == nil {
+		return f.Err
+	}
+
+	if f.expired() {
+		return ErrorExpired
+	}
+
+	f.expire = time.Now().Add(t)
+
+	reflect.ValueOf(f.Row).FieldByName("Expire").Set(reflect.ValueOf(f.expire))
+	return f.Err
+}
+
+
 func (f *Filter) Set(field string, value interface{}) error {
 	if f.Row == nil {
 		return f.Err
+	}
+
+	if f.expired() {
+		return ErrorExpired
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()

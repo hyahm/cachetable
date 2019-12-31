@@ -11,19 +11,10 @@ import (
 type row struct {
 	mu     sync.RWMutex // 行锁
 	value  interface{}  // 值
-	expire time.Time
+	Expire time.Time
 }
 
-var (
-	ErrorNotInit    = errors.New("init first")
-	ErrorNotPointer = errors.New("table must be a pointer")
-	ErrorNoKey      = errors.New("at least set one key")
-	ErrorStruct     = errors.New("not a same struct")
-	ErrorDuplicate  = errors.New("Duplicate key ")
-	//ErrorStructFeild = errors.New("Struct need Not Have ptr struct")
-	ErrorNoFeildKey = errors.New("field not a key")
-	ErrorNoRows     = errors.New("not rows")
-)
+
 
 type Cache struct {
 	keys  []string                   // 保存key, 为了去重， 使用map
@@ -78,7 +69,7 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 
 			}
 			if expire > 0 {
-				r.expire = time.Now().Add(expire)
+				r.Expire = time.Now().Add(expire)
 			}
 
 			r.mu.Lock()
@@ -164,7 +155,7 @@ func (c *Cache) Clean(t time.Duration) {
 		time.Sleep(t)
 		allmap := c.cache[c.keys[0]]
 		for k, v := range allmap {
-			if v.expire.Unix() == 0 {
+			if v.Expire.Unix() == 0 {
 				// 删除
 				_ = c.Filter(c.keys[0], k).Del()
 			}

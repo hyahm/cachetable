@@ -8,6 +8,6 @@ import (
 type row struct {
 	mu     sync.RWMutex // 行锁
 	value  interface{}  // 值
-	Expire time.Time
-	CanExpire bool
+	expire time.Time
+	canExpire bool
 }

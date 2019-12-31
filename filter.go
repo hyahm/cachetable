@@ -1,13 +1,14 @@
 package cachetable
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
 )
 
 type Filter struct {
-	Row   *row
+	row   *row
 	c      *Cache
 	Err    error
 	mu     sync.RWMutex
@@ -16,14 +17,14 @@ type Filter struct {
 func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if c.s == nil {
 		return &Filter{
-			Row: nil,
+			row: nil,
 			Err: ErrorNotInit,
 		}
 
 	}
 	if len(c.keys) == 0 {
 		return &Filter{
-			Row: nil,
+			row: nil,
 			Err: ErrorNoKey,
 		}
 
@@ -32,12 +33,12 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
 		key, _ := c.toString(value)
-		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
+		if vms[key].canExpire && time.Now().Sub(vms[key].expire) >= 0 {
 			// 说明过期了
 			//直接先删掉
 
 			f := &Filter{
-				Row: vms[key],
+				row: vms[key],
 				Err: ErrorExpired,
 				c:   c,
 				mu:  vms[key].mu,
@@ -45,11 +46,11 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 			f.mu.Lock()
 			f.Del()
 			f.mu.Unlock()
-			f.Row = nil
+			f.row = nil
 			return f
 		}
 		return &Filter{
-			Row:    vms[key],
+			row:    vms[key],
 			Err:    nil,
 			c:      c,
 			mu:     vms[key].mu,
@@ -57,7 +58,7 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 		return nil
 	} else {
 		return &Filter{
-			Row: nil,
+			row: nil,
 			Err: ErrorNoFeildKey,
 		}
 	}
@@ -79,14 +80,14 @@ func (f *Filter) Expired() bool {
 }
 
 func (f *Filter) TTL() int64 {
-	if f.Row == nil {
+	if f.row == nil {
 		return 0
 	}
-	if f.Row.CanExpire {
-		if time.Now().Sub(f.Row.Expire) >= 0 {
+	if f.row.canExpire {
+		if time.Now().Sub(f.row.expire) >= 0 {
 			return 0
 		} else {
-			return int64(f.Row.Expire.Sub(time.Now()).Seconds())
+			return int64(f.row.expire.Sub(time.Now()).Seconds())
 		}
 
 	} else {
@@ -95,7 +96,7 @@ func (f *Filter) TTL() int64 {
 }
 
 func (f *Filter) Get(keys ...string) []interface{} {
-	if f.Row == nil {
+	if f.row == nil {
 		return nil
 	}
 	l := len(keys)
@@ -105,14 +106,14 @@ func (f *Filter) Get(keys ...string) []interface{} {
 	}
 
 	for i, v := range keys {
-		val := reflect.ValueOf(f.Row.value).Elem().FieldByName(v).Interface()
+		val := reflect.ValueOf(f.row.value).Elem().FieldByName(v).Interface()
 		vs[i] = val
 	}
 	return vs
 }
 
 func (f *Filter) Del() error {
-	if f.Row == nil {
+	if f.row == nil {
 		return f.Err
 	}
 	if f.expired() {
@@ -123,7 +124,7 @@ func (f *Filter) Del() error {
 	//找到所有所有的keys 的值
 	for _, k := range f.c.keys {
 		//v := c.Get(k)
-		ft := reflect.ValueOf(f.Row).FieldByName(k).Interface()
+		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
 		value, _ := f.c.toString(ft)
 		delete(f.c.cache[k], value)
 	}
@@ -133,7 +134,7 @@ func (f *Filter) Del() error {
 }
 
 func (f *Filter) SetTTL(t time.Duration) error {
-	if f.Row == nil {
+	if f.row == nil {
 		return f.Err
 	}
 
@@ -141,12 +142,12 @@ func (f *Filter) SetTTL(t time.Duration) error {
 		return ErrorExpired
 	}
 	if t <= 0 {
-		f.Row.CanExpire = false
+		f.row.canExpire = false
 		return nil
 	}
 	if t > 0 {
-		f.Row.CanExpire = true
-		f.Row.Expire = time.Now().Add(t)
+		f.row.canExpire = true
+		f.row.expire = time.Now().Add(t)
 		return nil
 	}
 
@@ -155,7 +156,7 @@ func (f *Filter) SetTTL(t time.Duration) error {
 
 
 func (f *Filter) Set(field string, value interface{}) error {
-	if f.Row == nil {
+	if f.row == nil {
 		return f.Err
 	}
 
@@ -177,7 +178,7 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 		f.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},
-			value: f.Row,
+			value: f.row,
 		}
 		// 删掉老的键值
 		delete(f.c.cache[field], oldvalue_str)
@@ -185,7 +186,11 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	reflect.ValueOf(f.Row.value).Elem().FieldByName(field).Set(newv)
+	setv := reflect.ValueOf(f.row.value).Elem().FieldByName(field)
+	if newv.Type().String() != setv.Type().String() {
+		return ErrorTypeNoMatch
+	}
+	setv.Set(newv)
 
 	return f.Err
 }

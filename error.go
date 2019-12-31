@@ -11,4 +11,6 @@ var (
 	ErrorExpired = errors.New("row expired")
 	ErrorNoFeildKey = errors.New("field not a key")
 	ErrorNoRows     = errors.New("not rows")
+	ErrorTypeNoMatch     = errors.New("type mismatch")
+
 )

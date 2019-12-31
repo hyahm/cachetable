@@ -65,8 +65,8 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 
 			}
 			if expire > 0 {
-				r.Expire = time.Now().Add(expire)
-				r.CanExpire = true
+				r.expire = time.Now().Add(expire)
+				r.canExpire = true
 			}
 
 			r.mu.Lock()
@@ -152,7 +152,7 @@ func (c *Cache) Clean(t time.Duration) {
 		time.Sleep(t)
 		allmap := c.cache[c.keys[0]]
 		for k, v := range allmap {
-			if !v.CanExpire && time.Now().Sub(v.Expire) >= 0 {
+			if !v.canExpire && time.Now().Sub(v.expire) >= 0 {
 				c.Filter(c.keys[0], k).Del()
 			}
 		}

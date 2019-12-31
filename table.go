@@ -8,11 +8,7 @@ import (
 	"time"
 )
 
-type row struct {
-	mu     sync.RWMutex // 行锁
-	value  interface{}  // 值
-	Expire time.Time
-}
+
 
 
 
@@ -70,6 +66,7 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 			}
 			if expire > 0 {
 				r.Expire = time.Now().Add(expire)
+				r.CanExpire = true
 			}
 
 			r.mu.Lock()
@@ -157,7 +154,7 @@ func (c *Cache) Clean(t time.Duration) {
 		for k, v := range allmap {
 			if v.Expire.Unix() == 0 {
 				// 删除
-				_ = c.Filter(c.keys[0], k).Del()
+				c.Filter(c.keys[0], k).Del()
 			}
 		}
 	}

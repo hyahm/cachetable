@@ -7,11 +7,10 @@ import (
 )
 
 type Filter struct {
-	Row    interface{}
+	Row   *row
 	c      *Cache
 	Err    error
 	mu     sync.RWMutex
-	expire time.Time
 }
 
 func (c *Cache) Filter(field string, value interface{}) *Filter {
@@ -33,20 +32,26 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
 		key, _ := c.toString(value)
-		if vms[key].expire.Unix() != -62135596800 && time.Now().Unix() >= vms[key].expire.Unix() {
+		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
 			// 说明过期了
-			return &Filter{
-				Row: nil,
+			//直接先删掉
+
+			f := &Filter{
+				Row: vms[key],
 				Err: ErrorExpired,
 				c:   c,
 				mu:  vms[key].mu,
 			}
+			f.mu.Lock()
+			f.Del()
+			f.mu.Unlock()
+			f.Row = nil
+			return f
 		}
 		return &Filter{
-			Row:    vms[key].value,
+			Row:    vms[key],
 			Err:    nil,
 			c:      c,
-			expire: vms[key].expire,
 			mu:     vms[key].mu,
 		}
 		return nil
@@ -65,37 +70,28 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 //	Del() error
 //}
 
-func (f *Filter) Expire() int64 {
-	if f.Row == nil {
-		return 0
-	}
-	if f.expire.Unix() == -62135596800 {
-		return -1
-	}
-	if time.Now().Unix() >= f.expire.Unix() {
-		return 0
-	}
-	//s :=
-	return int64(f.expire.Sub(time.Now()).Seconds())
+func (f *Filter) expired() bool {
+	return f.TTL() == 0
 }
 
-func (f *Filter) expired() bool {
-
-	return f.TTL() <= 0
+func (f *Filter) Expired() bool {
+	return f.expired()
 }
 
 func (f *Filter) TTL() int64 {
 	if f.Row == nil {
 		return 0
 	}
-	if f.expire.Unix() == -62135596800 {
+	if f.Row.CanExpire {
+		if time.Now().Sub(f.Row.Expire) >= 0 {
+			return 0
+		} else {
+			return int64(f.Row.Expire.Sub(time.Now()).Seconds())
+		}
+
+	} else {
 		return -1
 	}
-	if time.Now().Unix() >= f.expire.Unix() {
-		return 0
-	}
-	//s :=
-	return int64(f.expire.Sub(time.Now()).Seconds())
 }
 
 func (f *Filter) Get(keys ...string) []interface{} {
@@ -109,7 +105,7 @@ func (f *Filter) Get(keys ...string) []interface{} {
 	}
 
 	for i, v := range keys {
-		val := reflect.ValueOf(f.Row).Elem().FieldByName(v).Interface()
+		val := reflect.ValueOf(f.Row.value).Elem().FieldByName(v).Interface()
 		vs[i] = val
 	}
 	return vs
@@ -144,10 +140,16 @@ func (f *Filter) SetTTL(t time.Duration) error {
 	if f.expired() {
 		return ErrorExpired
 	}
+	if t <= 0 {
+		f.Row.CanExpire = false
+		return nil
+	}
+	if t > 0 {
+		f.Row.CanExpire = true
+		f.Row.Expire = time.Now().Add(t)
+		return nil
+	}
 
-	f.expire = time.Now().Add(t)
-
-	reflect.ValueOf(f.Row).FieldByName("Expire").Set(reflect.ValueOf(f.expire))
 	return f.Err
 }
 
@@ -183,7 +185,7 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	reflect.ValueOf(f.Row).Elem().FieldByName(field).Set(newv)
+	reflect.ValueOf(f.Row.value).Elem().FieldByName(field).Set(newv)
 
 	return f.Err
 }

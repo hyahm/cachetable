@@ -23,10 +23,7 @@ const (
 )
 
 func main() {
-	a := 5654.15616
-	fmt.Println(int64(a))
-	var t time.Time
-	fmt.Println(t.Unix())
+
 	u := &people{
 		Name: "2222",
 		Age:  888,
@@ -102,4 +99,5 @@ func main() {
 	value = filter.Get(Age)
 	fmt.Println(value)
 	fmt.Println(filter.TTL())
+	go func() {}()
 }

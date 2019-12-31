@@ -1,6 +1,9 @@
 package cachetable
 
-import "errors"
+import (
+	"errors"
+	"strconv"
+)
 
 var (
 	ErrorNotInit    = errors.New("init first")
@@ -12,5 +15,14 @@ var (
 	ErrorNoFeildKey = errors.New("field not a key")
 	ErrorNoRows     = errors.New("not rows")
 	ErrorTypeNoMatch     = errors.New("type mismatch")
+	ErrorLengthNoMatch     = errors.New("length mismatch")
+	errNilPtr = errors.New("destination pointer is nil")
 
 )
+
+func strconvErr(err error) error {
+	if ne, ok := err.(*strconv.NumError); ok {
+		return ne.Err
+	}
+	return err
+}

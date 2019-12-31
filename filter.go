@@ -64,11 +64,6 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 
 }
 
-//type Filter interface {
-//	Get(keys ...string) []interface{}
-//	Set(field string, Value interface{}) error
-//	Del() error
-//}
 
 func (f *Filter) expired() bool {
 	return f.TTL() == 0
@@ -94,21 +89,23 @@ func (f *Filter) TTL() int64 {
 	}
 }
 
-func (f *Filter) Get(keys ...string) []interface{} {
-	if f.row == nil {
-		return nil
+func (f *Filter) Get(keys ...string) (*Result) {
+	rl := &Result{}
+	if f.Err != nil {
+		rl.err = f.Err
+		return rl
 	}
 	l := len(keys)
-	vs := make([]interface{}, l)
+	rl.values = make([]interface{}, l)
 	if f.expired() {
-		return vs
+		return rl
 	}
 
 	for i, v := range keys {
 		val := reflect.ValueOf(f.row.value).Elem().FieldByName(v).Interface()
-		vs[i] = val
+		rl.values[i] = val
 	}
-	return vs
+	return rl
 }
 
 func (f *Filter) Del() error {

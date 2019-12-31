@@ -152,8 +152,7 @@ func (c *Cache) Clean(t time.Duration) {
 		time.Sleep(t)
 		allmap := c.cache[c.keys[0]]
 		for k, v := range allmap {
-			if v.Expire.Unix() == 0 {
-				// 删除
+			if !v.CanExpire && time.Now().Sub(v.Expire) >= 0 {
 				c.Filter(c.keys[0], k).Del()
 			}
 		}

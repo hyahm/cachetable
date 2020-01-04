@@ -7,10 +7,10 @@ import (
 )
 
 type Filter struct {
-	row   *row
-	c      *Cache
-	Err    error
-	mu     sync.RWMutex
+	row *row
+	c   *Cache
+	Err error
+	mu  sync.RWMutex
 }
 
 func (c *Cache) Filter(field string, value interface{}) *Filter {
@@ -49,12 +49,12 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 			return f
 		}
 		return &Filter{
-			row:    vms[key],
-			Err:    nil,
-			c:      c,
-			mu:     vms[key].mu,
+			row: vms[key],
+			Err: nil,
+			c:   c,
+			mu:  vms[key].mu,
 		}
-		return nil
+		// return nil
 	} else {
 		return &Filter{
 			row: nil,
@@ -63,7 +63,6 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 	}
 
 }
-
 
 func (f *Filter) expired() bool {
 	return f.TTL() == 0
@@ -89,7 +88,7 @@ func (f *Filter) TTL() int64 {
 	}
 }
 
-func (f *Filter) Get(keys ...string) (*Result) {
+func (f *Filter) Get(keys ...string) *Result {
 	rl := &Result{}
 	if f.Err != nil {
 		rl.err = f.Err
@@ -121,7 +120,7 @@ func (f *Filter) Del() error {
 	for _, k := range f.c.keys {
 		//v := c.Get(k)
 		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
-		value:= asString(ft)
+		value := asString(ft)
 		delete(f.c.cache[k], value)
 	}
 
@@ -150,7 +149,6 @@ func (f *Filter) SetTTL(t time.Duration) error {
 	return f.Err
 }
 
-
 func (f *Filter) Set(field string, value interface{}) error {
 	if f.row == nil {
 		return f.Err
@@ -164,13 +162,13 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
-		newvalue_str:= asString(value)
+		newvalue_str := asString(value)
 		if _, ok := f.c.cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
-		oldvalue_str:= asString(value)
+		oldvalue_str := asString(value)
 
 		f.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},

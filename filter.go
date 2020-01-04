@@ -10,7 +10,6 @@ type Filter struct {
 	row *row
 	c   *Cache
 	Err error
-	mu  sync.RWMutex
 }
 
 func (c *Cache) Filter(field string, value interface{}) *Filter {
@@ -40,11 +39,10 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 				row: vms[key],
 				Err: ErrorExpired,
 				c:   c,
-				mu:  vms[key].mu,
 			}
-			f.mu.Lock()
+			f.row.mu.Lock()
 			f.Del()
-			f.mu.Unlock()
+			f.row.mu.Unlock()
 			f.row = nil
 			return f
 		}
@@ -52,7 +50,6 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 			row: vms[key],
 			Err: nil,
 			c:   c,
-			mu:  vms[key].mu,
 		}
 		// return nil
 	} else {
@@ -114,8 +111,8 @@ func (f *Filter) Del() error {
 	if f.expired() {
 		return ErrorExpired
 	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.row.mu.Lock()
+	defer f.row.mu.Unlock()
 	//找到所有所有的keys 的值
 	for _, k := range f.c.keys {
 		//v := c.Get(k)
@@ -157,8 +154,8 @@ func (f *Filter) Set(field string, value interface{}) error {
 	if f.expired() {
 		return ErrorExpired
 	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.row.mu.Lock()
+	defer f.row.mu.Unlock()
 
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复

@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/hyahm/cachetable"
 	"log"
 	"time"
+
+	"github.com/hyahm/cachetable"
 )
 
 // 添加了key， 那么就无法删除了
@@ -92,10 +93,10 @@ func main() {
 	fmt.Println(value)
 
 	fmt.Println(filter.TTL())
-	time.Sleep(3*time.Second)
+	time.Sleep(3 * time.Second)
 	fmt.Println(filter.TTL())
-	filter.SetTTL(10*time.Second)
-	time.Sleep(7*time.Second)
+	filter.SetTTL(10 * time.Second)
+	time.Sleep(7 * time.Second)
 	var age string
 	err = filter.Get(Age).Scan(&age)
 

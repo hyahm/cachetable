@@ -1,16 +1,10 @@
 package cachetable
 
 import (
-	"errors"
 	"reflect"
-	"strconv"
 	"sync"
 	"time"
 )
-
-
-
-
 
 type Cache struct {
 	keys  []string                   // 保存key, 为了去重， 使用map
@@ -55,10 +49,8 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 
 			}
 
-			kv, err := c.toString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
-			if err != nil {
-				return err
-			}
+			kv := asString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
+
 			r := &row{
 				mu:     sync.RWMutex{},
 				value:  table,
@@ -80,28 +72,28 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 	return nil
 }
 
-func (c *Cache) toString(value interface{}) (string, error) {
-	t := reflect.TypeOf(value).String()
-	fv := reflect.ValueOf(value)
-	//fmt.Println("type:", ft.String())
-	switch t {
-	case "string":
-		return fv.Interface().(string), nil
-	case "int":
-		return strconv.Itoa(fv.Interface().(int)), nil
-	case "int64":
-		return strconv.FormatInt(fv.Interface().(int64), 10), nil
-	case "uint64":
-		return strconv.FormatUint(fv.Interface().(uint64), 10), nil
-	case "bool":
-		return strconv.FormatBool(fv.Interface().(bool)), nil
-	case "float64":
-		return strconv.FormatFloat(fv.Interface().(float64), 'f', -1, 64), nil
-
-	default:
-		return "", errors.New("not support type")
-	}
-}
+//func (c *Cache) toString(value interface{}) (string, error) {
+//	t := reflect.TypeOf(value).String()
+//	fv := reflect.ValueOf(value)
+//	//fmt.Println("type:", ft.String())
+//	switch t {
+//	case "string":
+//		return fv.Interface().(string), nil
+//	case "int":
+//		return strconv.Itoa(fv.Interface().(int)), nil
+//	case "int64":
+//		return strconv.FormatInt(fv.Interface().(int64), 10), nil
+//	case "uint64":
+//		return strconv.FormatUint(fv.Interface().(uint64), 10), nil
+//	case "bool":
+//		return strconv.FormatBool(fv.Interface().(bool)), nil
+//	case "float64":
+//		return strconv.FormatFloat(fv.Interface().(float64), 'f', -1, 64), nil
+//
+//	default:
+//		return "", errors.New("not support type")
+//	}
+//}
 
 func (c *Cache) SetKeys(keys ...string) error {
 	if c.s == nil {
@@ -157,4 +149,14 @@ func (c *Cache) Clean(t time.Duration) {
 			}
 		}
 	}
+}
+
+
+func (c *Cache) Values(keys ...string) bool {
+	for _, v := range c.keys {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }

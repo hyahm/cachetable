@@ -31,7 +31,7 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 	// 找到所有索引， 删除,   必须是key
 	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
-		key, _ := c.toString(value)
+		key := asString(value)
 		if vms[key].canExpire && time.Now().Sub(vms[key].expire) >= 0 {
 			// 说明过期了
 			//直接先删掉
@@ -121,7 +121,7 @@ func (f *Filter) Del() error {
 	for _, k := range f.c.keys {
 		//v := c.Get(k)
 		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
-		value, _ := f.c.toString(ft)
+		value:= asString(ft)
 		delete(f.c.cache[k], value)
 	}
 
@@ -164,13 +164,13 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
-		newvalue_str, _ := f.c.toString(value)
+		newvalue_str:= asString(value)
 		if _, ok := f.c.cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
-		oldvalue_str, _ := f.c.toString(value)
+		oldvalue_str:= asString(value)
 
 		f.c.cache[field][newvalue_str] = &row{
 			mu:    sync.RWMutex{},

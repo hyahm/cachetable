@@ -58,12 +58,6 @@ func convertAssignRows(dest, src interface{}) error {
 			}
 			*d = []byte(s)
 			return nil
-		case *sql.RawBytes:
-			if d == nil {
-				return errNilPtr
-			}
-			*d = append((*d)[:0], s...)
-			return nil
 		}
 	case []byte:
 		switch d := dest.(type) {
@@ -85,12 +79,6 @@ func convertAssignRows(dest, src interface{}) error {
 			}
 			*d = cloneBytes(s)
 			return nil
-		case *sql.RawBytes:
-			if d == nil {
-				return errNilPtr
-			}
-			*d = s
-			return nil
 		}
 	case time.Time:
 		switch d := dest.(type) {
@@ -106,18 +94,12 @@ func convertAssignRows(dest, src interface{}) error {
 			}
 			*d = []byte(s.Format(time.RFC3339Nano))
 			return nil
-		case *sql.RawBytes:
-			if d == nil {
-				return errNilPtr
-			}
-			*d = s.AppendFormat((*d)[:0], time.RFC3339Nano)
-			return nil
 		}
-	case decimalDecompose:
-		switch d := dest.(type) {
-		case decimalCompose:
-			return d.Compose(s.Decompose(nil))
-		}
+	//case decimalDecompose:
+	//	switch d := dest.(type) {
+	//	case decimalCompose:
+	//		return d.Compose(s.Decompose(nil))
+	//	}
 	case nil:
 		switch d := dest.(type) {
 		case *interface{}:
@@ -127,12 +109,6 @@ func convertAssignRows(dest, src interface{}) error {
 			*d = nil
 			return nil
 		case *[]byte:
-			if d == nil {
-				return errNilPtr
-			}
-			*d = nil
-			return nil
-		case *sql.RawBytes:
 			if d == nil {
 				return errNilPtr
 			}
@@ -187,12 +163,6 @@ func convertAssignRows(dest, src interface{}) error {
 		sv = reflect.ValueOf(src)
 		if b, ok := asBytes(nil, sv); ok {
 			*d = b
-			return nil
-		}
-	case *sql.RawBytes:
-		sv = reflect.ValueOf(src)
-		if b, ok := asBytes([]byte(*d)[:0], sv); ok {
-			*d = sql.RawBytes(b)
 			return nil
 		}
 	case *bool:

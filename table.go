@@ -52,9 +52,8 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 			kv := asString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
 
 			r := &row{
-				mu:     sync.RWMutex{},
-				value:  table,
-
+				mu:    sync.RWMutex{},
+				value: table,
 			}
 			if expire > 0 {
 				r.expire = time.Now().Add(expire)
@@ -151,12 +150,20 @@ func (c *Cache) Clean(t time.Duration) {
 	}
 }
 
-
-func (c *Cache) Values(keys ...string) bool {
-	for _, v := range c.keys {
-		if v == s {
-			return true
-		}
+// 通过key 获取结构
+func (c *Cache) GetAllLine() []interface{} {
+	if len(c.keys) == 0 {
+		panic(ErrorNoKey)
 	}
-	return false
+	l := len(c.cache[c.keys[0]])
+	lines := make([]interface{}, 0, l)
+	for _, v := range c.cache[c.keys[0]] {
+		// 判断是否过期
+
+		if v.canExpire && v.expire.Sub(time.Now()) <= 0 {
+			continue
+		}
+		lines = append(lines, v.value)
+	}
+	return lines
 }

@@ -11,9 +11,6 @@ map[string]int64    // 用户名对应id
 初始包， 结构体的key只支持int, string, uint64, int64, bool,fload64 的值  
 
 
-写着写着突然发现接近快数据库了，  就是没存储功能， 不在的该不该继续了
-
-
 增加过期时间， 代替简单的缓存
 # demo 
 

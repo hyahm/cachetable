@@ -139,6 +139,8 @@ func main() {
 ```
 
 建议新开一个goroutine 删除过期的row
+```
 go func(){
 	func (c *Cache) Clean(t time.Duration) {   // t表示检查的时间间隔
 }()
+```

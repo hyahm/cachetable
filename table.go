@@ -13,16 +13,6 @@ type Cache struct {
 
 }
 
-func NewTable(table interface{}) *Cache {
-	// 表字段不能是指针或结构
-	return &Cache{
-		keys:  make([]string, 0),
-		cache: make(map[string]map[string]*row),
-		s:     table,
-	}
-
-}
-
 func (c *Cache) Add(table interface{}, expire time.Duration) error {
 	//必须是指针
 	if reflect.TypeOf(table).Kind() != reflect.Ptr {
@@ -133,7 +123,7 @@ func (c *Cache) hasKey(s string) bool {
 	return false
 }
 
-func (c *Cache) Clean(t time.Duration) {
+func (c *Cache) clean(t time.Duration) {
 	// 清除过期table
 	if len(c.keys) == 0 {
 		panic(ErrorNoKey)

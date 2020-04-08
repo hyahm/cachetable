@@ -14,8 +14,8 @@ type cat struct {
 
 const (
 	Name = "Name"
-	Age = "Age"
-	Id = "Id"
+	Age  = "Age"
+	Id   = "Id"
 )
 
 func TestTable(t *testing.T) {
@@ -30,13 +30,15 @@ func TestTable(t *testing.T) {
 		Age:  1,
 		Id:   1,
 	}
-	table := NewTable(cat{})
-	table.SetKeys(Name, Id)
+	ct := NewCT()
+	ct.Add("t1", cat{})
 
-	table.Add(t1, 0*time.Second)
-	table.Add(t2, 0*time.Second)
+	ct.Table("t1").SetKeys(Name, Id)
 
-	f := table.Filter(Id , 1)
+	ct.Table("t1").Add(t1, 0*time.Second)
+	ct.Table("t1").Add(t2, 0*time.Second)
+
+	f := ct.Table("t1").Filter(Id, 1)
 	err := f.Set(Age, "asdf")
 	if err == nil {
 		t.Error("need error")

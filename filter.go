@@ -69,7 +69,7 @@ func (f *Filter) Expired() bool {
 	return f.expired()
 }
 
-func (f *Filter) TTL() int64 {
+func (f *Filter) TTL() time.Duration {
 	if f.row == nil {
 		return 0
 	}
@@ -77,7 +77,7 @@ func (f *Filter) TTL() int64 {
 		if time.Now().Sub(f.row.expire) >= 0 {
 			return 0
 		} else {
-			return int64(f.row.expire.Sub(time.Now()).Seconds())
+			return f.row.expire.Sub(time.Now())
 		}
 
 	} else {

@@ -56,24 +56,25 @@ func main() {
 		Age:  555,
 		Id:   5,
 	}
-	c := cachetable.NewTable(people{})
+	ct := cachetable.NewCT()
+	ct.Add("me", people{})
 
-	if err := c.SetKeys(Id, Age); err != nil {
+	if err := ct.Table("me").SetKeys(Id, Age); err != nil {
 		panic(err)
 	}
 
-	err := c.Add(u, 0)
+	err := ct.Table("me").Add(u, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1, 10*time.Second)
-	c.Add(u2, 0)
-	c.Add(u3, 0)
-	c.Add(u4, 0)
+	ct.Table("me").Add(u1, 10*time.Second)
+	ct.Table("me").Add(u2, 0)
+	ct.Table("me").Add(u3, 0)
+	ct.Table("me").Add(u4, 0)
 
-	c.Add(u5, 0)
+	ct.Table("me").Add(u5, 0)
 	// 获取值
-	filter := c.Filter(Id, 1)
+	filter := ct.Table("me").Filter(Id, 1)
 	value := filter.Get(Name)
 	fmt.Println(value)
 	// 设置非 key的value
@@ -81,8 +82,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	var a string
 	value = filter.Get(Name)
-	fmt.Println(value)
+	err = value.Scan(&a)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(a)
 
 	// 设置 key的value
 	err = filter.Set(Age, 6666)

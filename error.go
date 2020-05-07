@@ -13,6 +13,7 @@ var (
 	ErrorDuplicate     = errors.New("Duplicate key ")
 	ErrorExpired       = errors.New("row expired")
 	ErrorNoFeildKey    = errors.New("field not a key")
+	ErrorNotFoundValue = errors.New("not found value")
 	ErrorNoRows        = errors.New("not rows")
 	ErrorTypeNoMatch   = errors.New("type mismatch")
 	ErrorLengthNoMatch = errors.New("length mismatch")

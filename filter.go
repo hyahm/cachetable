@@ -7,10 +7,10 @@ import (
 
 type Filter struct {
 	Row *Row
-	c   *Cache
+	c   *Table
 }
 
-func (c *Cache) Filter(field string, value interface{}) (*Filter, error) {
+func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 	if c.S == nil {
 		return &Filter{
 			Row: nil,
@@ -27,6 +27,9 @@ func (c *Cache) Filter(field string, value interface{}) (*Filter, error) {
 	if vms, ok := c.Cache[field]; ok {
 		//找到所有所有的keys 的值
 		key := asString(value)
+		if _, ok := vms[key]; !ok {
+			return nil, ErrorNotFoundValue
+		}
 		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
 			// 说明过期了
 			//直接先删掉

@@ -6,16 +6,10 @@ import (
 	"time"
 
 	"github.com/hyahm/cachetable"
+	"github.com/hyahm/cachetable/example/aaa"
 )
 
 // 添加了key， 那么就无法删除了
-type people struct {
-	Name    string
-	Age     int
-	Id      int
-	Kecheng []string
-	Data    []byte
-}
 
 const (
 	Name = "Name"
@@ -25,42 +19,48 @@ const (
 
 func main() {
 
-	u := &people{
+	u := &aaa.People{
 		Name: "2222",
 		Age:  888,
 		Id:   0,
 		Data: []byte("hello world"),
 	}
-	u1 := &people{
+	u1 := &aaa.Teacher{
 		Name: "2222",
 		Age:  111,
 		Id:   1,
 	}
-	u2 := &people{
+	u2 := &aaa.Teacher{
 		Name: "2",
 		Age:  222,
 		Id:   2,
 	}
-	u3 := &people{
+	u3 := &aaa.People{
 		Name: "2222",
 		Age:  333,
 		Id:   3,
 	}
-	u4 := &people{
+	u4 := &aaa.People{
 		Name: "2222",
 		Age:  444,
 		Id:   4,
 	}
-	u5 := &people{
+	u5 := &aaa.People{
 		Name: "2222",
 		Age:  555,
 		Id:   5,
 	}
-	ct := cachetable.NewCT()
-	ct.Add("me", people{})
 
+	ct := cachetable.NewCT()
+	ct.Add("me", aaa.People{})
+	ct.Add("teacher", aaa.Teacher{})
 	c, _ := ct.Table("me")
 	err := c.SetKeys(Id, Age)
+	if err != nil {
+		panic(err)
+	}
+	t, _ := ct.Table("teacher")
+	err = t.SetKeys(Id, Age)
 	if err != nil {
 		panic(err)
 	}
@@ -69,17 +69,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(u1, 10*time.Second)
-	c.Add(u2, 0)
+	t.Add(u1, 10*time.Second)
+	t.Add(u2, 0)
 	c.Add(u3, 0)
 	c.Add(u4, 0)
 
 	c.Add(u5, 0)
 	// 获取值
 
-	filter, err := c.Filter(Id, 1)
+	filter, err := c.Filter(Id, 3)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	value := filter.Get(Name)
 	fmt.Println(value)
@@ -92,7 +92,7 @@ func main() {
 	value = filter.Get(Name)
 	err = value.Scan(&a)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	fmt.Println(a)
 
@@ -117,6 +117,6 @@ func main() {
 	err = ct.Save("aa.txt")
 	if err != nil {
 		fmt.Println("00000000000000000000")
-		log.Fatal(err)
+		panic(err)
 	}
 }

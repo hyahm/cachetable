@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-type Cache struct {
+type Table struct {
 	Keys  []string                   // 保存key, 为了去重， 使用map
 	Cache map[string]map[string]*Row // 保存field， 将所有值都转为string
 	S     interface{}                // 保存表结构
 
 }
 
-func (c *Cache) Add(table interface{}, expire time.Duration) error {
+func (c *Table) Add(table interface{}, expire time.Duration) error {
 	//必须是指针
 	if reflect.TypeOf(table).Kind() != reflect.Ptr {
 		return ErrorNotPointer
@@ -106,7 +106,7 @@ func (c *Cache) Add(table interface{}, expire time.Duration) error {
 // 	return nil
 // }
 
-func (c *Cache) SetKeys(keys ...string) error {
+func (c *Table) SetKeys(keys ...string) error {
 	if c.S == nil {
 		return ErrorNotInit
 	}
@@ -132,11 +132,11 @@ func (c *Cache) SetKeys(keys ...string) error {
 //
 
 //
-func (c *Cache) GetKeys() (ks []string) {
+func (c *Table) GetKeys() (ks []string) {
 	return c.Keys
 }
 
-func (c *Cache) hasKey(s string) bool {
+func (c *Table) hasKey(s string) bool {
 	for _, v := range c.Keys {
 		if v == s {
 			return true
@@ -145,7 +145,7 @@ func (c *Cache) hasKey(s string) bool {
 	return false
 }
 
-func (c *Cache) clean(t time.Duration) {
+func (c *Table) clean(t time.Duration) {
 	// 清除过期table
 	if len(c.Keys) == 0 {
 		panic(ErrorNoKey)
@@ -167,7 +167,7 @@ func (c *Cache) clean(t time.Duration) {
 }
 
 // 通过key 获取结构
-func (c *Cache) GetAllLine() []interface{} {
+func (c *Table) GetAllLine() []interface{} {
 	if len(c.Keys) == 0 {
 		panic(ErrorNoKey)
 	}

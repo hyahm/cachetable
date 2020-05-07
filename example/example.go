@@ -99,14 +99,18 @@ func main() {
 	fmt.Println(value)
 
 	fmt.Println(filter.TTL())
-	time.Sleep(3 * time.Second)
+	// time.Sleep(3 * time.Second)
 	fmt.Println(filter.TTL())
 	filter.SetTTL(10 * time.Second)
-	time.Sleep(7 * time.Second)
+	// time.Sleep(7 * time.Second)
 	var age string
 	err = filter.Get(Age).Scan(&age)
 
 	fmt.Println(age)
 	fmt.Println(filter.TTL())
-
+	err = ct.Save("aa.txt")
+	if err != nil {
+		fmt.Println("00000000000000000000")
+		log.Fatal(err)
+	}
 }

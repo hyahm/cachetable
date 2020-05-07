@@ -7,26 +7,23 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 )
 
-type row struct {
-	mu     sync.RWMutex // 行锁
-	value  interface{}  // 值
-	expire time.Time
-	canExpire bool
+type Row struct {
+	Value     interface{} // 值
+	Expire    time.Time
+	CanExpire bool
 }
 
 type Result struct {
 	values []interface{}
-	err error
+	err    error
 }
 
 type Resulter interface {
 	Scan(...interface{}) error
 }
-
 
 func (r *Result) Scan(values ...interface{}) error {
 	if r.err != nil {
@@ -36,7 +33,7 @@ func (r *Result) Scan(values ...interface{}) error {
 	if len(r.values) != len(values) {
 		return ErrorLengthNoMatch
 	}
-	for i, _ := range values{
+	for i, _ := range values {
 		return convertAssignRows(values[i], r.values[i])
 	}
 	return r.err
@@ -95,11 +92,7 @@ func convertAssignRows(dest, src interface{}) error {
 			*d = []byte(s.Format(time.RFC3339Nano))
 			return nil
 		}
-	//case decimalDecompose:
-	//	switch d := dest.(type) {
-	//	case decimalCompose:
-	//		return d.Compose(s.Decompose(nil))
-	//	}
+
 	case nil:
 		switch d := dest.(type) {
 		case *interface{}:
@@ -115,35 +108,7 @@ func convertAssignRows(dest, src interface{}) error {
 			*d = nil
 			return nil
 		}
-	// The driver is returning a cursor the client may iterate over.
-	//case driver.Rows:
-	//	switch d := dest.(type) {
-	//	case *Rows:
-	//		if d == nil {
-	//			return errNilPtr
-	//		}
-	//		if rows == nil {
-	//			return errors.New("invalid context to convert cursor rows, missing parent *Rows")
-	//		}
-	//		rows.closemu.Lock()
-	//		*d = Rows{
-	//			dc:          rows.dc,
-	//			releaseConn: func(error) {},
-	//			rowsi:       s,
-	//		}
-	//		// Chain the cancel function.
-	//		parentCancel := rows.cancel
-	//		rows.cancel = func() {
-	//			// When Rows.cancel is called, the closemu will be locked as well.
-	//			// So we can access rs.lasterr.
-	//			d.close(rows.lasterr)
-	//			if parentCancel != nil {
-	//				parentCancel()
-	//			}
-	//		}
-	//		rows.closemu.Unlock()
-	//		return nil
-	//	}
+
 	}
 
 	var sv reflect.Value
@@ -280,7 +245,6 @@ type decimalDecompose interface {
 	Decompose(buf []byte) (form byte, negative bool, coefficient []byte, exponent int32)
 }
 
-
 func cloneBytes(b []byte) []byte {
 	if b == nil {
 		return nil
@@ -331,7 +295,6 @@ func asBytes(buf []byte, rv reflect.Value) (b []byte, ok bool) {
 	}
 	return
 }
-
 
 type decimalCompose interface {
 	// Compose sets the internal decimal value from parts. If the value cannot be

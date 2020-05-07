@@ -2,59 +2,58 @@ package cachetable
 
 import (
 	"reflect"
-	"sync"
 	"time"
 )
 
 type Filter struct {
-	row *row
+	Row *Row
 	c   *Cache
 	Err error
 }
 
 func (c *Cache) Filter(field string, value interface{}) *Filter {
-	if c.s == nil {
+	if c.S == nil {
 		return &Filter{
-			row: nil,
+			Row: nil,
 			Err: ErrorNotInit,
 		}
 
 	}
-	if len(c.keys) == 0 {
+	if len(c.Keys) == 0 {
 		return &Filter{
-			row: nil,
+			Row: nil,
 			Err: ErrorNoKey,
 		}
 
 	}
 	// 找到所有索引， 删除,   必须是key
-	if vms, ok := c.cache[field]; ok {
+	if vms, ok := c.Cache[field]; ok {
 		//找到所有所有的keys 的值
 		key := asString(value)
-		if vms[key].canExpire && time.Now().Sub(vms[key].expire) >= 0 {
+		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
 			// 说明过期了
 			//直接先删掉
 
 			f := &Filter{
-				row: vms[key],
+				Row: vms[key],
 				Err: ErrorExpired,
 				c:   c,
 			}
-			f.row.mu.Lock()
+			cmu.Lock()
 			f.Del()
-			f.row.mu.Unlock()
-			f.row = nil
+			cmu.Unlock()
+			f.Row = nil
 			return f
 		}
 		return &Filter{
-			row: vms[key],
+			Row: vms[key],
 			Err: nil,
 			c:   c,
 		}
 		// return nil
 	} else {
 		return &Filter{
-			row: nil,
+			Row: nil,
 			Err: ErrorNoFeildKey,
 		}
 	}
@@ -70,14 +69,14 @@ func (f *Filter) Expired() bool {
 }
 
 func (f *Filter) TTL() time.Duration {
-	if f.row == nil {
+	if f.Row == nil {
 		return 0
 	}
-	if f.row.canExpire {
-		if time.Now().Sub(f.row.expire) >= 0 {
+	if f.Row.CanExpire {
+		if time.Now().Sub(f.Row.Expire) >= 0 {
 			return 0
 		} else {
-			return f.row.expire.Sub(time.Now())
+			return f.Row.Expire.Sub(time.Now())
 		}
 
 	} else {
@@ -98,27 +97,27 @@ func (f *Filter) Get(keys ...string) *Result {
 	}
 
 	for i, v := range keys {
-		val := reflect.ValueOf(f.row.value).Elem().FieldByName(v).Interface()
+		val := reflect.ValueOf(f.Row.Value).Elem().FieldByName(v).Interface()
 		rl.values[i] = val
 	}
 	return rl
 }
 
 func (f *Filter) Del() error {
-	if f.row == nil {
+	if f.Row == nil {
 		return f.Err
 	}
 	if f.expired() {
 		return ErrorExpired
 	}
-	f.row.mu.Lock()
-	defer f.row.mu.Unlock()
+	cmu.Lock()
+	defer cmu.Unlock()
 	//找到所有所有的keys 的值
-	for _, k := range f.c.keys {
+	for _, k := range f.c.Keys {
 		//v := c.Get(k)
-		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
+		ft := reflect.ValueOf(f.Row.Value).FieldByName(k).Interface()
 		value := asString(ft)
-		delete(f.c.cache[k], value)
+		delete(f.c.Cache[k], value)
 	}
 
 	return f.Err
@@ -126,7 +125,8 @@ func (f *Filter) Del() error {
 }
 
 func (f *Filter) SetTTL(t time.Duration) error {
-	if f.row == nil {
+	// 某一条数据设置过期时间
+	if f.Row == nil {
 		return f.Err
 	}
 
@@ -134,12 +134,12 @@ func (f *Filter) SetTTL(t time.Duration) error {
 		return ErrorExpired
 	}
 	if t <= 0 {
-		f.row.canExpire = false
+		f.Row.CanExpire = false
 		return nil
 	}
 	if t > 0 {
-		f.row.canExpire = true
-		f.row.expire = time.Now().Add(t)
+		f.Row.CanExpire = true
+		f.Row.Expire = time.Now().Add(t)
 		return nil
 	}
 
@@ -147,37 +147,36 @@ func (f *Filter) SetTTL(t time.Duration) error {
 }
 
 func (f *Filter) Set(field string, value interface{}) error {
-	if f.row == nil {
+	if f.Row == nil {
 		return f.Err
 	}
 
 	if f.expired() {
 		return ErrorExpired
 	}
-	f.row.mu.Lock()
-	defer f.row.mu.Unlock()
+	cmu.Lock()
+	defer cmu.Unlock()
 
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
 		newvalue_str := asString(value)
-		if _, ok := f.c.cache[field][newvalue_str]; ok {
+		if _, ok := f.c.Cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
 		oldvalue_str := asString(value)
 
-		f.c.cache[field][newvalue_str] = &row{
-			mu:    sync.RWMutex{},
-			value: f.row,
+		f.c.Cache[field][newvalue_str] = &Row{
+			Value: f.Row,
 		}
 		// 删掉老的键值
-		delete(f.c.cache[field], oldvalue_str)
+		delete(f.c.Cache[field], oldvalue_str)
 	}
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	setv := reflect.ValueOf(f.row.value).Elem().FieldByName(field)
+	setv := reflect.ValueOf(f.Row.Value).Elem().FieldByName(field)
 	if newv.Type().String() != setv.Type().String() {
 		return ErrorTypeNoMatch
 	}

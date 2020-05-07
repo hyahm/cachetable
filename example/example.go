@@ -59,22 +59,28 @@ func main() {
 	ct := cachetable.NewCT()
 	ct.Add("me", people{})
 
-	if err := ct.Table("me").SetKeys(Id, Age); err != nil {
+	c, _ := ct.Table("me")
+	err := c.SetKeys(Id, Age)
+	if err != nil {
 		panic(err)
 	}
 
-	err := ct.Table("me").Add(u, 0)
+	err = c.Add(u, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ct.Table("me").Add(u1, 10*time.Second)
-	ct.Table("me").Add(u2, 0)
-	ct.Table("me").Add(u3, 0)
-	ct.Table("me").Add(u4, 0)
+	c.Add(u1, 10*time.Second)
+	c.Add(u2, 0)
+	c.Add(u3, 0)
+	c.Add(u4, 0)
 
-	ct.Table("me").Add(u5, 0)
+	c.Add(u5, 0)
 	// 获取值
-	filter := ct.Table("me").Filter(Id, 1)
+
+	filter, err := c.Filter(Id, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
 	value := filter.Get(Name)
 	fmt.Println(value)
 	// 设置非 key的value

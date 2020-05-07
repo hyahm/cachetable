@@ -2,6 +2,7 @@ package cachetable
 
 import (
 	"fmt"
+	"log"
 	"testing"
 	"time"
 )
@@ -33,13 +34,20 @@ func TestTable(t *testing.T) {
 	ct := NewCT()
 	ct.Add("t1", cat{})
 
-	ct.Table("t1").SetKeys(Name, Id)
+	T1, err := ct.Table("t1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	T1.SetKeys(Name, Id)
 
-	ct.Table("t1").Add(t1, 0*time.Second)
-	ct.Table("t1").Add(t2, 0*time.Second)
+	T1.Add(t1, 0*time.Second)
+	T1.Add(t2, 0*time.Second)
 
-	f := ct.Table("t1").Filter(Id, 1)
-	err := f.Set(Age, "asdf")
+	f, err := T1.Filter(Id, 1)
+	if err == nil {
+		t.Error("need error")
+	}
+	err = f.Set(Age, "asdf")
 	if err == nil {
 		t.Error("need error")
 	}
@@ -60,17 +68,21 @@ func TestSave(t *testing.T) {
 	}
 	ct := NewCT()
 	ct.Add("t1", cat{})
+	T1, err := ct.Table("t1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	T1.SetKeys(Name, Id)
 
-	ct.Table("t1").SetKeys(Name, Id)
+	T1.Add(t1, 0*time.Second)
+	T1.Add(t2, 0*time.Second)
 
-	ct.Table("t1").Add(t1, 0*time.Second)
-	ct.Table("t1").Add(t2, 0*time.Second)
-
-	f := ct.Table("t1").Filter(Id, 1)
-	err := f.Set(Age, "asdf")
+	f, err := T1.Filter(Id, 1)
 	if err == nil {
 		t.Error("need error")
 	}
+	err = f.Set(Age, "asdf")
+
 	err = ct.Save("aa.txt")
 	if err != nil {
 		t.Log(err)

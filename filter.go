@@ -8,22 +8,19 @@ import (
 type Filter struct {
 	Row *Row
 	c   *Cache
-	Err error
 }
 
-func (c *Cache) Filter(field string, value interface{}) *Filter {
+func (c *Cache) Filter(field string, value interface{}) (*Filter, error) {
 	if c.S == nil {
 		return &Filter{
 			Row: nil,
-			Err: ErrorNotInit,
-		}
+		}, ErrorNotInit
 
 	}
 	if len(c.Keys) == 0 {
 		return &Filter{
 			Row: nil,
-			Err: ErrorNoKey,
-		}
+		}, ErrorNoKey
 
 	}
 	// 找到所有索引， 删除,   必须是key
@@ -36,26 +33,24 @@ func (c *Cache) Filter(field string, value interface{}) *Filter {
 
 			f := &Filter{
 				Row: vms[key],
-				Err: ErrorExpired,
-				c:   c,
+
+				c: c,
 			}
 			cmu.Lock()
 			f.Del()
 			cmu.Unlock()
 			f.Row = nil
-			return f
+			return f, ErrorExpired
 		}
 		return &Filter{
 			Row: vms[key],
-			Err: nil,
 			c:   c,
-		}
+		}, nil
 		// return nil
 	} else {
 		return &Filter{
 			Row: nil,
-			Err: ErrorNoFeildKey,
-		}
+		}, ErrorNoFeildKey
 	}
 
 }
@@ -86,10 +81,7 @@ func (f *Filter) TTL() time.Duration {
 
 func (f *Filter) Get(keys ...string) *Result {
 	rl := &Result{}
-	if f.Err != nil {
-		rl.err = f.Err
-		return rl
-	}
+
 	l := len(keys)
 	rl.values = make([]interface{}, l)
 	if f.expired() {
@@ -104,9 +96,7 @@ func (f *Filter) Get(keys ...string) *Result {
 }
 
 func (f *Filter) Del() error {
-	if f.Row == nil {
-		return f.Err
-	}
+
 	if f.expired() {
 		return ErrorExpired
 	}
@@ -120,15 +110,12 @@ func (f *Filter) Del() error {
 		delete(f.c.Cache[k], value)
 	}
 
-	return f.Err
+	return nil
 
 }
 
 func (f *Filter) SetTTL(t time.Duration) error {
 	// 某一条数据设置过期时间
-	if f.Row == nil {
-		return f.Err
-	}
 
 	if f.expired() {
 		return ErrorExpired
@@ -143,13 +130,10 @@ func (f *Filter) SetTTL(t time.Duration) error {
 		return nil
 	}
 
-	return f.Err
+	return nil
 }
 
 func (f *Filter) Set(field string, value interface{}) error {
-	if f.Row == nil {
-		return f.Err
-	}
 
 	if f.expired() {
 		return ErrorExpired
@@ -182,5 +166,5 @@ func (f *Filter) Set(field string, value interface{}) error {
 	}
 	setv.Set(newv)
 
-	return f.Err
+	return nil
 }

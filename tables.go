@@ -3,9 +3,9 @@ package cachetable
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -37,22 +37,22 @@ func NewCT() *CT {
 	}
 }
 
-func log(name *string) {
-	fmt.Printf("key %v have already exsit \n", name)
+func printLog(name *string) {
+
 }
 
-func (ct *CT) Add(name string, table interface{}) {
+func (ct *CT) Add(name string, table interface{}) error {
 
 	if _, ok := ct.Data[name]; ok {
-		runtime.SetFinalizer(&name, log)
-		return
+		return errors.New("key " + name + " have already exsit \n")
 	}
+
 	ct.Data[name] = &Cache{
 		Keys:  make([]string, 0),
 		Cache: make(map[string]map[string]*Row),
 		S:     table,
 	}
-
+	return nil
 }
 
 func (ct *CT) Delete(name string) {
@@ -68,8 +68,12 @@ func (ct *CT) Exsit(name string) (ok bool) {
 	return
 }
 
-func (ct *CT) Table(name string) *Cache {
-	return ct.Data[name]
+func (ct *CT) Table(name string) (*Cache, error) {
+	if v, ok := ct.Data[name]; ok {
+		return v, nil
+	} else {
+		return nil, ErrorNoFeildKey
+	}
 }
 
 // 清除过期的key

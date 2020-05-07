@@ -55,7 +55,7 @@ func (ct CT) ShowTables() (tablesname []string) {
 	ctmu.Lock()
 	defer ctmu.Unlock()
 	for name, _ := range ct {
-		tables = append(tables, name)
+		tablesname = append(tablesname, name)
 	}
 	return
 }

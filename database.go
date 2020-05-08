@@ -83,9 +83,6 @@ func (ct CT) Save(filename string) error {
 	var w bytes.Buffer
 	enc := gob.NewEncoder(&w)
 
-	ctmu.Lock()
-	defer ctmu.Unlock()
-
 	gob.Register(&ct)
 	for _, v := range ct {
 		gob.Register(v.S)

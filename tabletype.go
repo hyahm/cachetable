@@ -184,7 +184,7 @@ func convertAssignRows(dest, src interface{}) error {
 			dv.Set(reflect.Zero(dv.Type()))
 			return nil
 		}
-		dv.Set(reflect.New(dv.Type().Elem()))
+		dv.Set(reflect.New(dv.Type()))
 		return convertAssignRows(dv.Interface(), src)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if src == nil {

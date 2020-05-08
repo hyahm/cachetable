@@ -52,8 +52,8 @@ func main() {
 	}
 
 	ct := cachetable.NewCT()
-	ct.Add("me", aaa.People{})
-	ct.Add("teacher", aaa.Teacher{})
+	ct.Add("me", &aaa.People{})
+	ct.Add("teacher", &aaa.Teacher{})
 	c, _ := ct.Table("me")
 	err := c.SetKeys(Id, Age)
 	if err != nil {
@@ -105,10 +105,7 @@ func main() {
 	fmt.Println(value)
 
 	fmt.Println(filter.TTL())
-	// time.Sleep(3 * time.Second)
-	fmt.Println(filter.TTL())
-	filter.SetTTL(10 * time.Second)
-	// time.Sleep(7 * time.Second)
+
 	var age string
 	err = filter.Get(Age).Scan(&age)
 

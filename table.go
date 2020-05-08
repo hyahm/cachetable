@@ -13,21 +13,18 @@ type Table struct {
 }
 
 func (c *Table) Add(table interface{}, expire time.Duration) error {
-	//必须是指针
+	//table必须是指针
 	if reflect.TypeOf(table).Kind() != reflect.Ptr {
 		return ErrorNotPointer
 	}
 	if len(c.Keys) == 0 {
 		return ErrorNoKey
 	}
-	var st reflect.Type
-	if reflect.TypeOf(c.S).Kind() == reflect.Ptr {
-		st = reflect.TypeOf(c.S).Elem()
-	} else {
-		st = reflect.TypeOf(c.S)
-	}
+
+	st := reflect.TypeOf(c.S)
+
 	// 必须是同一类型
-	if st == reflect.TypeOf(table).Elem() {
+	if st == reflect.TypeOf(table) {
 		//遍历 添加key
 		for _, k := range c.Keys {
 			// 将字段的值全部转化为string
@@ -59,66 +56,16 @@ func (c *Table) Add(table interface{}, expire time.Duration) error {
 	return nil
 }
 
-// func (c *Cache) Set(table interface{}, expire time.Duration) (*Filter, error) {
-// 	//必须是指针
-// 	if reflect.TypeOf(table).Kind() != reflect.Ptr {
-// 		return ErrorNotPointer
-// 	}
-// 	if len(c.Keys) == 0 {
-// 		return ErrorNoKey
-// 	}
-// 	var st reflect.Type
-// 	if reflect.TypeOf(c.S).Kind() == reflect.Ptr {
-// 		st = reflect.TypeOf(c.S).Elem()
-// 	} else {
-// 		st = reflect.TypeOf(c.S)
-// 	}
-// 	// 必须是同一类型
-// 	if st == reflect.TypeOf(table).Elem() {
-// 		//遍历 添加key
-// 		for _, k := range c.Keys {
-// 			// 将字段的值全部转化为string
-
-// 			if _, ok := c.Cache[k]; !ok {
-// 				// 没有字段， 初始化
-// 				c.Cache[k] = make(map[string]*Row)
-
-// 			}
-
-// 			kv := asString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
-
-// 			r := &Row{
-// 				Value: table,
-// 			}
-// 			if expire > 0 {
-// 				r.Expire = time.Now().Add(expire)
-// 				r.CanExpire = true
-// 			}
-
-// 			cmu.Lock()
-// 			c.Cache[k][kv] = r
-// 			cmu.Unlock()
-// 		}
-
-// 	} else {
-// 		return ErrorStruct
-// 	}
-// 	return nil
-// }
-
 func (c *Table) SetKeys(keys ...string) error {
 	if c.S == nil {
 		return ErrorNotInit
 	}
-	var sv reflect.Type
-	if reflect.TypeOf(c.S).Kind() == reflect.Ptr {
-		sv = reflect.TypeOf(c.S).Elem()
-	} else {
-		sv = reflect.TypeOf(c.S)
-	}
+
+	sv := reflect.TypeOf(c.S)
+
 	// 判断key 是否有效
 	for _, k := range keys {
-		if _, ok := sv.FieldByName(k); ok {
+		if _, ok := sv.Elem().FieldByName(k); ok {
 			if !c.hasKey(k) {
 				c.Keys = append(c.Keys, k)
 			}

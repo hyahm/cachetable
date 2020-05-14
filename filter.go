@@ -6,53 +6,52 @@ import (
 )
 
 type Filter struct {
-	Row *Row
+	row *Row
 	c   *Table
 }
 
 func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
-	if c.S == nil {
+	if c.typ == nil {
 		return &Filter{
-			Row: nil,
+			row: nil,
 		}, ErrorNotInit
 
 	}
-	if len(c.Keys) == 0 {
+	if len(c.keys) == 0 {
 		return &Filter{
-			Row: nil,
+			row: nil,
 		}, ErrorNoKey
 
 	}
 	// 找到所有索引， 删除,   必须是key
-	if vms, ok := c.Cache[field]; ok {
+	if vms, ok := c.cache[field]; ok {
 		//找到所有所有的keys 的值
 		key := asString(value)
 		if _, ok := vms[key]; !ok {
 			return nil, ErrorNotFoundValue
 		}
-		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
+		if vms[key].canExpire && time.Now().Sub(vms[key].expire) >= 0 {
 			// 说明过期了
 			//直接先删掉
 
 			f := &Filter{
-				Row: vms[key],
-
-				c: c,
+				row: vms[key],
+				c:   c,
 			}
 			cmu.Lock()
 			f.Del()
 			cmu.Unlock()
-			f.Row = nil
+			f.row = nil
 			return f, ErrorExpired
 		}
 		return &Filter{
-			Row: vms[key],
+			row: vms[key],
 			c:   c,
 		}, nil
 		// return nil
 	} else {
 		return &Filter{
-			Row: nil,
+			row: nil,
 		}, ErrorNoFeildKey
 	}
 
@@ -67,14 +66,14 @@ func (f *Filter) Expired() bool {
 }
 
 func (f *Filter) TTL() time.Duration {
-	if f.Row == nil {
+	if f.row == nil {
 		return 0
 	}
-	if f.Row.CanExpire {
-		if time.Now().Sub(f.Row.Expire) >= 0 {
+	if f.row.canExpire {
+		if time.Now().Sub(f.row.expire) >= 0 {
 			return 0
 		} else {
-			return f.Row.Expire.Sub(time.Now())
+			return f.row.expire.Sub(time.Now())
 		}
 
 	} else {
@@ -92,25 +91,26 @@ func (f *Filter) Get(keys ...string) *Result {
 	}
 
 	for i, v := range keys {
-		val := reflect.ValueOf(f.Row.Value).Elem().FieldByName(v).Interface()
+		val := reflect.ValueOf(f.row.value).Elem().FieldByName(v).Interface()
 		rl.values[i] = val
 	}
 	return rl
 }
 
+func (f *Filter) Row() interface{} {
+	return f.row.value
+}
+
 func (f *Filter) Del() error {
 
-	if f.expired() {
-		return ErrorExpired
-	}
 	cmu.Lock()
 	defer cmu.Unlock()
 	//找到所有所有的keys 的值
-	for _, k := range f.c.Keys {
+	for _, k := range f.c.keys {
 		//v := c.Get(k)
-		ft := reflect.ValueOf(f.Row.Value).FieldByName(k).Interface()
+		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
 		value := asString(ft)
-		delete(f.c.Cache[k], value)
+		delete(f.c.cache[k], value)
 	}
 
 	return nil
@@ -123,13 +123,15 @@ func (f *Filter) SetTTL(t time.Duration) error {
 	if f.expired() {
 		return ErrorExpired
 	}
+	cmu.Lock()
+	defer cmu.Unlock()
 	if t <= 0 {
-		f.Row.CanExpire = false
+		f.row.canExpire = false
 		return nil
 	}
 	if t > 0 {
-		f.Row.CanExpire = true
-		f.Row.Expire = time.Now().Add(t)
+		f.row.canExpire = true
+		f.row.expire = time.Now().Add(t)
 		return nil
 	}
 
@@ -147,23 +149,23 @@ func (f *Filter) Set(field string, value interface{}) error {
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
 		newvalue_str := asString(value)
-		if _, ok := f.c.Cache[field][newvalue_str]; ok {
+		if _, ok := f.c.cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
 		oldvalue_str := asString(value)
 
-		f.c.Cache[field][newvalue_str] = &Row{
-			Value: f.Row,
+		f.c.cache[field][newvalue_str] = &Row{
+			value: f.row,
 		}
 		// 删掉老的键值
-		delete(f.c.Cache[field], oldvalue_str)
+		delete(f.c.cache[field], oldvalue_str)
 	}
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	setv := reflect.ValueOf(f.Row.Value).Elem().FieldByName(field)
+	setv := reflect.ValueOf(f.row.value).Elem().FieldByName(field)
 	if newv.Type().String() != setv.Type().String() {
 		return ErrorTypeNoMatch
 	}

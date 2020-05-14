@@ -22,7 +22,7 @@ func NewCT() CT {
 
 }
 
-func (ct CT) Add(name string, table interface{}) error {
+func (ct CT) CreateTable(name string, table interface{}) error {
 	ctmu.Lock()
 	defer ctmu.Unlock()
 	if _, ok := ct[name]; ok {
@@ -30,9 +30,9 @@ func (ct CT) Add(name string, table interface{}) error {
 	}
 
 	ct[name] = &Table{
-		Keys:  make([]string, 0),
-		Cache: make(map[string]map[string]*Row),
-		S:     table,
+		keys:  make([]string, 0),
+		cache: make(map[string]map[string]*Row),
+		typ:   table,
 	}
 	return nil
 }
@@ -60,7 +60,7 @@ func (ct CT) ShowTables() (tablesname []string) {
 	return
 }
 
-func (ct CT) Table(name string) (*Table, error) {
+func (ct CT) Use(name string) (*Table, error) {
 	ctmu.Lock()
 	defer ctmu.Unlock()
 	if v, ok := ct[name]; ok {
@@ -85,7 +85,7 @@ func (ct CT) Save(filename string) error {
 
 	gob.Register(&ct)
 	for _, v := range ct {
-		gob.Register(v.S)
+		gob.Register(v.typ)
 	}
 
 	err := enc.Encode(ct)

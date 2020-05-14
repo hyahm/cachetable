@@ -32,9 +32,9 @@ func TestTable(t *testing.T) {
 		Id:   1,
 	}
 	ct := NewCT()
-	ct.Add("t1", cat{})
+	ct.CreateTable("t1", cat{})
 
-	T1, err := ct.Table("t1")
+	T1, err := ct.Use("t1")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,8 +67,8 @@ func TestSave(t *testing.T) {
 		Id:   1,
 	}
 	ct := NewCT()
-	ct.Add("t1", cat{})
-	T1, err := ct.Table("t1")
+	ct.CreateTable("t1", cat{})
+	T1, err := ct.Use("t1")
 	if err != nil {
 		log.Fatal(err)
 	}

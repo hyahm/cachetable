@@ -106,6 +106,6 @@ func main() {
 
 	fmt.Println(age)
 	fmt.Println(filter.TTL())
-	fmt.Println(filter.Table().(*aaa.People))
+	fmt.Println(filter.Row().(*aaa.People))
 	fmt.Println(c.Columns("Age"))
 }

@@ -37,7 +37,6 @@ const (
 )
 
 func main() {
-
 	u := &aaa.People{
 		Name: "2222",
 		Age:  888,
@@ -71,14 +70,14 @@ func main() {
 	}
 
 	ct := cachetable.NewCT()
-	ct.Add("me", aaa.People{})
-	ct.Add("teacher", aaa.Teacher{})
-	c, _ := ct.Table("me")
+	ct.CreateTable("me", &aaa.People{})
+	ct.CreateTable("teacher", &aaa.Teacher{})
+	c, _ := ct.Use("me")
 	err := c.SetKeys(Id, Age)
 	if err != nil {
 		panic(err)
 	}
-	t, _ := ct.Table("teacher")
+	t, _ := ct.Use("teacher")
 	err = t.SetKeys(Id, Age)
 	if err != nil {
 		panic(err)
@@ -120,39 +119,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	value = filter.Get(Age)
-	fmt.Println(value)
 
-	fmt.Println(filter.TTL())
-	// time.Sleep(3 * time.Second)
-	fmt.Println(filter.TTL())
-	filter.SetTTL(10 * time.Second)
-	// time.Sleep(7 * time.Second)
 	var age string
 	err = filter.Get(Age).Scan(&age)
 
 	fmt.Println(age)
 	fmt.Println(filter.TTL())
-	err = ct.Save("aa.txt")
-	if err != nil {
-		fmt.Println("00000000000000000000")
-		panic(err)
-	}
+	fmt.Println(filter.Table().(*aaa.People))
+	fmt.Println(c.Columns("Age"))
 }
-
-
-
-```
-输出, 过期时间单位是秒
-```
-[2222]
-[hello world]
-[6666]
-9
-6
-[6666]
-2
-
 
 ```
 

@@ -34,7 +34,7 @@ func (r *Result) Scan(values ...interface{}) error {
 		return ErrorLengthNoMatch
 	}
 	for i, _ := range values {
-		return convertAssignRows(values[i], r.values[i])
+		convertAssignRows(values[i], r.values[i])
 	}
 	return r.err
 }

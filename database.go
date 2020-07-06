@@ -22,17 +22,19 @@ func NewCT() CT {
 
 }
 
+var ExsitErr = errors.New("key have already exsit")
+
 func (ct CT) CreateTable(name string, table interface{}) error {
 	ctmu.Lock()
 	defer ctmu.Unlock()
 	if _, ok := ct[name]; ok {
-		return errors.New("key " + name + " have already exsit \n")
+		return ExsitErr
 	}
 
 	ct[name] = &Table{
-		keys:  make([]string, 0),
-		cache: make(map[string]map[string]*Row),
-		typ:   table,
+		Keys:  make([]string, 0),
+		Cache: make(map[string]map[string]*Row),
+		Typ:   table,
 	}
 	return nil
 }
@@ -54,7 +56,7 @@ func (ct CT) Exsit(name string) (ok bool) {
 func (ct CT) ShowTables() (tablesname []string) {
 	ctmu.Lock()
 	defer ctmu.Unlock()
-	for name, _ := range ct {
+	for name := range ct {
 		tablesname = append(tablesname, name)
 	}
 	return
@@ -85,7 +87,7 @@ func (ct CT) Save(filename string) error {
 
 	gob.Register(&ct)
 	for _, v := range ct {
-		gob.Register(v.typ)
+		gob.Register(v.Typ)
 	}
 
 	err := enc.Encode(ct)

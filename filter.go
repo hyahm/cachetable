@@ -11,20 +11,20 @@ type Filter struct {
 }
 
 func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
-	if c.typ == nil {
+	if c.Typ == nil {
 		return &Filter{
 			row: nil,
 		}, ErrorNotInit
 
 	}
-	if len(c.keys) == 0 {
+	if len(c.Keys) == 0 {
 		return &Filter{
 			row: nil,
 		}, ErrorNoKey
 
 	}
 	// 找到所有索引， 删除,   必须是key
-	if vms, ok := c.cache[field]; ok {
+	if vms, ok := c.Cache[field]; ok {
 		//找到所有所有的keys 的值
 		key := asString(value)
 		if _, ok := vms[key]; !ok {
@@ -106,11 +106,11 @@ func (f *Filter) Del() error {
 	cmu.Lock()
 	defer cmu.Unlock()
 	//找到所有所有的keys 的值
-	for _, k := range f.c.keys {
+	for _, k := range f.c.Keys {
 		//v := c.Get(k)
 		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
 		value := asString(ft)
-		delete(f.c.cache[k], value)
+		delete(f.c.Cache[k], value)
 	}
 
 	return nil
@@ -149,18 +149,18 @@ func (f *Filter) Set(field string, value interface{}) error {
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
 		newvalue_str := asString(value)
-		if _, ok := f.c.cache[field][newvalue_str]; ok {
+		if _, ok := f.c.Cache[field][newvalue_str]; ok {
 			return ErrorDuplicate
 		}
 
 		// 如果是设置的是key是主键， 重新生成
 		oldvalue_str := asString(value)
 
-		f.c.cache[field][newvalue_str] = &Row{
+		f.c.Cache[field][newvalue_str] = &Row{
 			value: f.row,
 		}
 		// 删掉老的键值
-		delete(f.c.cache[field], oldvalue_str)
+		delete(f.c.Cache[field], oldvalue_str)
 	}
 
 	// 更新v

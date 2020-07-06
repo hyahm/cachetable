@@ -11,9 +11,9 @@ import (
 )
 
 type Row struct {
-	value     interface{} // 值
-	expire    time.Time
-	canExpire bool
+	Value     interface{} // 值
+	Expire    time.Time
+	CanExpire bool
 }
 
 type Result struct {

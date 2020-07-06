@@ -30,7 +30,7 @@ func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 		if _, ok := vms[key]; !ok {
 			return nil, ErrorNotFoundValue
 		}
-		if vms[key].canExpire && time.Now().Sub(vms[key].expire) >= 0 {
+		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
 			// 说明过期了
 			//直接先删掉
 
@@ -69,11 +69,11 @@ func (f *Filter) TTL() time.Duration {
 	if f.row == nil {
 		return 0
 	}
-	if f.row.canExpire {
-		if time.Now().Sub(f.row.expire) >= 0 {
+	if f.row.CanExpire {
+		if time.Now().Sub(f.row.Expire) >= 0 {
 			return 0
 		} else {
-			return f.row.expire.Sub(time.Now())
+			return f.row.Expire.Sub(time.Now())
 		}
 
 	} else {
@@ -91,14 +91,14 @@ func (f *Filter) Get(keys ...string) *Result {
 	}
 
 	for i, v := range keys {
-		val := reflect.ValueOf(f.row.value).Elem().FieldByName(v).Interface()
+		val := reflect.ValueOf(f.row.Value).Elem().FieldByName(v).Interface()
 		rl.values[i] = val
 	}
 	return rl
 }
 
 func (f *Filter) Row() interface{} {
-	return f.row.value
+	return f.row.Value
 }
 
 func (f *Filter) Del() error {
@@ -108,7 +108,7 @@ func (f *Filter) Del() error {
 	//找到所有所有的keys 的值
 	for _, k := range f.c.Keys {
 		//v := c.Get(k)
-		ft := reflect.ValueOf(f.row.value).FieldByName(k).Interface()
+		ft := reflect.ValueOf(f.row.Value).FieldByName(k).Interface()
 		value := asString(ft)
 		delete(f.c.Cache[k], value)
 	}
@@ -126,12 +126,12 @@ func (f *Filter) SetTTL(t time.Duration) error {
 	cmu.Lock()
 	defer cmu.Unlock()
 	if t <= 0 {
-		f.row.canExpire = false
+		f.row.CanExpire = false
 		return nil
 	}
 	if t > 0 {
-		f.row.canExpire = true
-		f.row.expire = time.Now().Add(t)
+		f.row.CanExpire = true
+		f.row.Expire = time.Now().Add(t)
 		return nil
 	}
 
@@ -157,7 +157,7 @@ func (f *Filter) Set(field string, value interface{}) error {
 		oldvalue_str := asString(value)
 
 		f.c.Cache[field][newvalue_str] = &Row{
-			value: f.row,
+			Value: f.row,
 		}
 		// 删掉老的键值
 		delete(f.c.Cache[field], oldvalue_str)
@@ -165,7 +165,7 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 	// 更新v
 	newv := reflect.ValueOf(value)
-	setv := reflect.ValueOf(f.row.value).Elem().FieldByName(field)
+	setv := reflect.ValueOf(f.row.Value).Elem().FieldByName(field)
 	if newv.Type().String() != setv.Type().String() {
 		return ErrorTypeNoMatch
 	}

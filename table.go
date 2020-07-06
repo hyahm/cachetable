@@ -37,11 +37,11 @@ func (c *Table) Add(table interface{}, expire time.Duration) error {
 			kv := asString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
 
 			r := &Row{
-				value: table,
+				Value: table,
 			}
 			if expire > 0 {
-				r.expire = time.Now().Add(expire)
-				r.canExpire = true
+				r.Expire = time.Now().Add(expire)
+				r.CanExpire = true
 			}
 
 			cmu.Lock()
@@ -101,7 +101,7 @@ func (c *Table) clean(t time.Duration) {
 		time.Sleep(t)
 		allmap := c.Cache[c.Keys[0]]
 		for k, v := range allmap {
-			if !v.canExpire && time.Now().Sub(v.expire) >= 0 {
+			if !v.CanExpire && time.Now().Sub(v.Expire) >= 0 {
 				f, err := c.Filter(c.Keys[0], k)
 				if err != nil {
 					continue
@@ -122,10 +122,10 @@ func (c *Table) GetAllLine() []interface{} {
 	for _, v := range c.Cache[c.Keys[0]] {
 		// 判断是否过期
 
-		if v.canExpire && v.expire.Sub(time.Now()) <= 0 {
+		if v.CanExpire && v.Expire.Sub(time.Now()) <= 0 {
 			continue
 		}
-		lines = append(lines, v.value)
+		lines = append(lines, v.Value)
 	}
 	return lines
 }
@@ -140,11 +140,11 @@ func (c *Table) Columns(col string) []interface{} {
 	for _, v := range c.Cache[c.Keys[0]] {
 		// 判断是否过期
 
-		if v.canExpire && v.expire.Sub(time.Now()) <= 0 {
+		if v.CanExpire && v.Expire.Sub(time.Now()) <= 0 {
 			continue
 		}
 
-		lines = append(lines, reflect.ValueOf(v.value).Elem().FieldByName(col).Interface())
+		lines = append(lines, reflect.ValueOf(v.Value).Elem().FieldByName(col).Interface())
 	}
 	return lines
 }

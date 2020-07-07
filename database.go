@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -33,8 +34,9 @@ func (ct CT) CreateTable(name string, table interface{}) error {
 
 	ct[name] = &Table{
 		Keys:  make([]string, 0),
-		Cache: make(map[string]map[string]*Row),
+		Cache: make(map[string]map[interface{}]*Row),
 		Typ:   table,
+		Name:  name,
 	}
 	return nil
 }
@@ -75,9 +77,14 @@ func (ct CT) Use(name string) (*Table, error) {
 func (ct CT) Clean(expire time.Duration) {
 	ctmu.Lock()
 	defer ctmu.Unlock()
-	for _, v := range ct {
-		v.clean(expire)
+	for {
+		fmt.Println("0000000000000000000000")
+		for _, v := range ct {
+			go v.clean()
+		}
+		time.Sleep(expire)
 	}
+
 }
 
 func (ct CT) Save(filename string) error {

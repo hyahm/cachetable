@@ -1,15 +1,17 @@
 package cachetable
 
 import (
+	"fmt"
 	"reflect"
+	"sync"
 	"time"
 )
 
 type Table struct {
-	Keys  []string                   // 保存key, 为了去重， 使用map
-	Cache map[string]map[string]*Row // 保存field， 将所有值都转为string, 双层map， 第一层是key， 第二层是key的值
-	Typ   interface{}                // 保存表结构
-
+	Keys  []string                        // 保存key, 为了去重， 使用map
+	Cache map[string]map[interface{}]*Row // 保存field， 将所有值都转为string, 双层map， 第一层是key， 第二层是key的值
+	Typ   interface{}                     // 保存表结构
+	Name  string
 }
 
 func (c *Table) Add(table interface{}, expire time.Duration) error {
@@ -31,13 +33,14 @@ func (c *Table) Add(table interface{}, expire time.Duration) error {
 			// 将字段的值全部转化为string
 			if _, ok := c.Cache[k]; !ok {
 				// 没有字段， 初始化
-				c.Cache[k] = make(map[string]*Row)
+				c.Cache[k] = make(map[interface{}]*Row)
 
 			}
 			kv := asString(reflect.ValueOf(table).Elem().FieldByName(k).Interface())
 
 			r := &Row{
 				Value: table,
+				Mu:    &sync.RWMutex{},
 			}
 			if expire > 0 {
 				r.Expire = time.Now().Add(expire)
@@ -91,25 +94,42 @@ func (c *Table) hasKey(s string) bool {
 	return false
 }
 
-func (c *Table) clean(t time.Duration) {
+func (c *Table) clean() {
 	// 清除过期table
 	if len(c.Keys) == 0 {
 		panic(ErrorNoKey)
 	}
-	for {
-		// 第一个字段就行了
-		time.Sleep(t)
-		allmap := c.Cache[c.Keys[0]]
-		for k, v := range allmap {
-			if !v.CanExpire && time.Now().Sub(v.Expire) >= 0 {
-				f, err := c.Filter(c.Keys[0], k)
-				if err != nil {
-					continue
+	for _, key := range c.Keys {
+
+		for k, v := range c.Cache[key] {
+			fmt.Println("key:", key)
+			fmt.Println("value:", k)
+			fmt.Printf("vvvvv%+v\n", v)
+			fmt.Printf("vvvvv%+v\n", v.Value)
+			now := time.Now()
+			fmt.Println("now", now)
+			fmt.Printf("vvvvv%v\n", now.Sub(v.Expire).Seconds())
+			if v.CanExpire && time.Now().Sub(v.Expire).Seconds() >= float64(0) {
+				if v.Mu != nil {
+					v.Mu.Lock()
+					delete(c.Cache[key], k)
+					v.Mu.Unlock()
+				} else {
+					delete(c.Cache[key], k)
 				}
-				f.Del()
+
+				// f, err := c.Filter(key, k)
+				// fmt.Printf("ffffff%+v\n", f)
+				// if err != nil {
+				// 	continue
+				// }
+				fmt.Println("deleleleleleleleletetete")
+				// f.Del()
 			}
 		}
 	}
+	// 第一个字段就行了
+
 }
 
 // 通过key 获取结构

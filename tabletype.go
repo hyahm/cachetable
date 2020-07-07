@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type Row struct {
 	Value     interface{} // 值
-	Expire    time.Time
-	CanExpire bool
+	Expire    time.Time   // 过期时间
+	CanExpire bool        // 能过期
+	Mu        *sync.RWMutex
 }
 
 type Result struct {
@@ -33,7 +35,7 @@ func (r *Result) Scan(values ...interface{}) error {
 	if len(r.values) != len(values) {
 		return ErrorLengthNoMatch
 	}
-	for i, _ := range values {
+	for i := range values {
 		convertAssignRows(values[i], r.values[i])
 	}
 	return r.err

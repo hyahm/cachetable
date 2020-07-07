@@ -2,12 +2,16 @@ package cachetable
 
 import (
 	"reflect"
+	"sync"
 	"time"
 )
 
 type Filter struct {
-	row *Row
-	c   *Table
+	row       *Row
+	c         *Table
+	tableName string
+	field     string
+	value     interface{}
 }
 
 func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
@@ -24,36 +28,38 @@ func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 
 	}
 	// 找到所有索引， 删除,   必须是key
-	if vms, ok := c.Cache[field]; ok {
+	if _, ok := c.Cache[field]; ok {
 		//找到所有所有的keys 的值
-		key := asString(value)
-		if _, ok := vms[key]; !ok {
-			return nil, ErrorNotFoundValue
-		}
-		if vms[key].CanExpire && time.Now().Sub(vms[key].Expire) >= 0 {
-			// 说明过期了
-			//直接先删掉
 
+		if _, ok := c.Cache[field][value]; ok {
+			// 根据这个值找到这一行
 			f := &Filter{
-				row: vms[key],
-				c:   c,
+				row:       c.Cache[field][value],
+				c:         c,
+				tableName: c.Name,
+				field:     field,
+				value:     value,
 			}
-			cmu.Lock()
-			f.Del()
-			cmu.Unlock()
-			f.row = nil
+			if c.Cache[field][value].CanExpire && time.Now().Sub(c.Cache[field][value].Expire) >= 0 {
+				// 说明过期了
+				//直接先删掉
+
+				f.Del()
+				return nil, ErrorExpired
+			}
 			return f, ErrorExpired
 		}
-		return &Filter{
-			row: vms[key],
-			c:   c,
-		}, nil
+
+		// return &Filter{
+		// 	row: nil,
+		// 	c:   c,
+		// }, nil
 		// return nil
-	} else {
+	// } else {
 		return &Filter{
 			row: nil,
 		}, ErrorNoFeildKey
-	}
+	// }
 
 }
 
@@ -101,19 +107,20 @@ func (f *Filter) Row() interface{} {
 	return f.row.Value
 }
 
-func (f *Filter) Del() error {
+func (f *Filter) Del() {
 
-	cmu.Lock()
-	defer cmu.Unlock()
+	f.row.Mu.Lock()
+	defer f.row.Mu.Unlock()
+	delete(f.c.Cache[f.field], f.value)
 	//找到所有所有的keys 的值
-	for _, k := range f.c.Keys {
-		//v := c.Get(k)
-		ft := reflect.ValueOf(f.row.Value).FieldByName(k).Interface()
-		value := asString(ft)
-		delete(f.c.Cache[k], value)
-	}
+	// for _, k := range f.c.Keys {
+	// 	//v := c.Get(k)
+	// 	ft := reflect.ValueOf(f.row.Value).FieldByName(k).Interface()
+	// 	value := asString(ft)
+	// 	delete(f.c.Cache[k], value)
+	// }
 
-	return nil
+	// return nil
 
 }
 
@@ -158,6 +165,7 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 		f.c.Cache[field][newvalue_str] = &Row{
 			Value: f.row,
+			Mu:    &sync.RWMutex{},
 		}
 		// 删掉老的键值
 		delete(f.c.Cache[field], oldvalue_str)

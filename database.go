@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -75,10 +74,8 @@ func (ct CT) Use(name string) (*Table, error) {
 }
 
 func (ct CT) Clean(expire time.Duration) {
-	ctmu.Lock()
-	defer ctmu.Unlock()
+
 	for {
-		fmt.Println("0000000000000000000000")
 		for _, v := range ct {
 			go v.clean()
 		}

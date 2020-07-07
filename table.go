@@ -1,7 +1,6 @@
 package cachetable
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -102,13 +101,6 @@ func (c *Table) clean() {
 	for _, key := range c.Keys {
 
 		for k, v := range c.Cache[key] {
-			fmt.Println("key:", key)
-			fmt.Println("value:", k)
-			fmt.Printf("vvvvv%+v\n", v)
-			fmt.Printf("vvvvv%+v\n", v.Value)
-			now := time.Now()
-			fmt.Println("now", now)
-			fmt.Printf("vvvvv%v\n", now.Sub(v.Expire).Seconds())
 			if v.CanExpire && time.Now().Sub(v.Expire).Seconds() >= float64(0) {
 				if v.Mu != nil {
 					v.Mu.Lock()
@@ -118,13 +110,6 @@ func (c *Table) clean() {
 					delete(c.Cache[key], k)
 				}
 
-				// f, err := c.Filter(key, k)
-				// fmt.Printf("ffffff%+v\n", f)
-				// if err != nil {
-				// 	continue
-				// }
-				fmt.Println("deleleleleleleleletetete")
-				// f.Del()
 			}
 		}
 	}

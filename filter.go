@@ -7,11 +7,10 @@ import (
 )
 
 type Filter struct {
-	row       *Row
-	c         *Table
-	tableName string
-	field     string
-	value     interface{}
+	row   *Row
+	c     *Table
+	field string
+	value interface{}
 }
 
 func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
@@ -34,11 +33,10 @@ func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 		if _, ok := c.Cache[field][value]; ok {
 			// 根据这个值找到这一行
 			f := &Filter{
-				row:       c.Cache[field][value],
-				c:         c,
-				tableName: c.Name,
-				field:     field,
-				value:     value,
+				row:   c.Cache[field][value],
+				c:     c,
+				field: field,
+				value: value,
 			}
 			if c.Cache[field][value].CanExpire && time.Now().Sub(c.Cache[field][value].Expire) >= 0 {
 				// 说明过期了

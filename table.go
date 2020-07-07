@@ -2,7 +2,6 @@ package cachetable
 
 import (
 	"reflect"
-	"sync"
 	"time"
 )
 
@@ -39,16 +38,15 @@ func (c *Table) Add(table interface{}, expire time.Duration) error {
 
 			r := &Row{
 				Value: table,
-				Mu:    &sync.RWMutex{},
 			}
 			if expire > 0 {
 				r.Expire = time.Now().Add(expire)
 				r.CanExpire = true
 			}
 
-			cmu.Lock()
+			rowmu.Lock()
 			c.Cache[k][kv] = r
-			cmu.Unlock()
+			rowmu.Unlock()
 		}
 
 	} else {
@@ -102,13 +100,9 @@ func (c *Table) clean() {
 
 		for k, v := range c.Cache[key] {
 			if v.CanExpire && time.Now().Sub(v.Expire).Seconds() >= float64(0) {
-				if v.Mu != nil {
-					v.Mu.Lock()
-					delete(c.Cache[key], k)
-					v.Mu.Unlock()
-				} else {
-					delete(c.Cache[key], k)
-				}
+				rowmu.Lock()
+				delete(c.Cache[key], k)
+				rowmu.Unlock()
 
 			}
 		}

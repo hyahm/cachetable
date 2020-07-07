@@ -2,7 +2,6 @@ package cachetable
 
 import (
 	"reflect"
-	"sync"
 	"time"
 )
 
@@ -103,8 +102,6 @@ func (f *Filter) Row() interface{} {
 
 func (f *Filter) Del() {
 
-	f.row.Mu.Lock()
-	defer f.row.Mu.Unlock()
 	delete(f.c.Cache[f.field], f.value)
 	//找到所有所有的keys 的值
 	// for _, k := range f.c.Keys {
@@ -124,8 +121,8 @@ func (f *Filter) SetTTL(t time.Duration) error {
 	if f.Expired() {
 		return ErrorExpired
 	}
-	cmu.Lock()
-	defer cmu.Unlock()
+	rowmu.Lock()
+	defer rowmu.Unlock()
 	if t <= 0 {
 		f.row.CanExpire = false
 		return nil
@@ -144,8 +141,8 @@ func (f *Filter) Set(field string, value interface{}) error {
 	if f.Expired() {
 		return ErrorExpired
 	}
-	cmu.Lock()
-	defer cmu.Unlock()
+	rowmu.Lock()
+	defer rowmu.Unlock()
 
 	if ok := f.c.hasKey(field); ok {
 		// 如果是key, value不能重复
@@ -159,7 +156,6 @@ func (f *Filter) Set(field string, value interface{}) error {
 
 		f.c.Cache[field][newvalue_str] = &Row{
 			Value: f.row,
-			Mu:    &sync.RWMutex{},
 		}
 		// 删掉老的键值
 		delete(f.c.Cache[field], oldvalue_str)

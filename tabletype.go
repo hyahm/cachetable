@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -15,7 +14,7 @@ type Row struct {
 	Value     interface{} // 值
 	Expire    time.Time   // 过期时间
 	CanExpire bool        // 能过期
-	Mu        *sync.RWMutex
+	Running   bool
 }
 
 type Result struct {

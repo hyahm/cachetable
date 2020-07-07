@@ -11,13 +11,15 @@ import (
 )
 
 var ctmu sync.RWMutex
-var cmu sync.RWMutex
+
+// 表锁， gob的问题导致不能使用
+var rowmu sync.RWMutex
 
 type CT map[string]*Table
 
 func NewCT() CT {
 	ctmu = sync.RWMutex{}
-	cmu = sync.RWMutex{}
+	rowmu = sync.RWMutex{}
 	return make(map[string]*Table)
 
 }

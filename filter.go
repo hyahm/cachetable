@@ -55,23 +55,19 @@ func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 		// 	c:   c,
 		// }, nil
 		// return nil
-	// } else {
-		return &Filter{
-			row: nil,
-		}, ErrorNoFeildKey
-	// }
+		// } else {
 
-}
-
-func (f *Filter) expired() bool {
-	return f.TTL() == 0
+	}
+	return &Filter{
+		row: nil,
+	}, ErrorNoFeildKey
 }
 
 func (f *Filter) Expired() bool {
-	return f.expired()
+	return f.TTL() == float64(0)
 }
 
-func (f *Filter) TTL() time.Duration {
+func (f *Filter) TTL() float64 {
 	if f.row == nil {
 		return 0
 	}
@@ -79,7 +75,7 @@ func (f *Filter) TTL() time.Duration {
 		if time.Now().Sub(f.row.Expire) >= 0 {
 			return 0
 		} else {
-			return f.row.Expire.Sub(time.Now())
+			return f.row.Expire.Sub(time.Now()).Seconds()
 		}
 
 	} else {
@@ -92,7 +88,7 @@ func (f *Filter) Get(keys ...string) *Result {
 
 	l := len(keys)
 	rl.values = make([]interface{}, l)
-	if f.expired() {
+	if f.Expired() {
 		return rl
 	}
 
@@ -127,7 +123,7 @@ func (f *Filter) Del() {
 func (f *Filter) SetTTL(t time.Duration) error {
 	// 某一条数据设置过期时间
 
-	if f.expired() {
+	if f.Expired() {
 		return ErrorExpired
 	}
 	cmu.Lock()
@@ -147,7 +143,7 @@ func (f *Filter) SetTTL(t time.Duration) error {
 
 func (f *Filter) Set(field string, value interface{}) error {
 
-	if f.expired() {
+	if f.Expired() {
 		return ErrorExpired
 	}
 	cmu.Lock()

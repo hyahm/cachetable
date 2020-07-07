@@ -38,14 +38,14 @@ func (c *Table) Filter(field string, value interface{}) (*Filter, error) {
 				field: field,
 				value: value,
 			}
-			if c.Cache[field][value].CanExpire && time.Now().Sub(c.Cache[field][value].Expire) >= 0 {
+			if c.Cache[field][value].CanExpire && time.Now().Sub(c.Cache[field][value].Expire).Seconds() >= float64(0) {
 				// 说明过期了
 				//直接先删掉
 
 				f.Del()
 				return nil, ErrorExpired
 			}
-			return f, ErrorExpired
+			return f, nil
 		}
 
 		// return &Filter{
